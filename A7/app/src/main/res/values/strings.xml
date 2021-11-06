@@ -1,6 +1,11 @@
 <resources>
     <string name="app_name">NUMAD21FA_Bello_Hiciano_Maranon</string>
 
+    <!-- Main Activity -->
+    <string name="send_message">Send Message</string>
+    <string name="message_history">Message History</string>
+    <string name="logout">Log Out</string>
+
     <!--Sign-In Activity-->
     <string name="username_header">Username:</string>
     <string name="username_hint">Username</string>

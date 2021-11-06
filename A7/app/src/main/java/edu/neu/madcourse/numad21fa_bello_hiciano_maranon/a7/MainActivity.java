@@ -4,12 +4,17 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -18,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.ActivityMainBinding;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.SignInActivity;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.Token;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
 
 /**
@@ -30,9 +36,11 @@ public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
     private final int SIGN_IN_ACTIVITY_CODE = 101;
 
-    FirebaseDatabase database;
-    ActivityMainBinding binding;
-    User currUser;
+    private FirebaseDatabase database;
+    private ActivityMainBinding binding;
+    private User currUser;
+    private Token fcmToken;
+
 
     /*
     An ActivityResultLauncher, which allows Activities opened by the MainActivity
@@ -55,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
                                                 .ofPattern("MM/dd/uuuu H:m:s:S")));
                                 database.getReference("Users")
                                         .child(currUser.getUsername()).setValue(currUser);
+
+                                pairToken(currUser);
                             }
                             break;
                     }
@@ -103,7 +113,11 @@ public class MainActivity extends AppCompatActivity {
                     savedInstanceState.getString("loginTime"));
         }
 
-        // TODO - account for TOKEN as well
+        if (savedInstanceState.containsKey("token") &&
+                savedInstanceState.containsKey("registerTime")) {
+            fcmToken = new Token(savedInstanceState.getString("token"),
+                    savedInstanceState.getString("registerTime"));
+        }
     }
 
 
@@ -119,16 +133,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        if (currUser == null) {
-            outState.putString("username", null);
-            outState.putString("loginTime", null);
-
-        } else {
+        if (currUser != null) {
             outState.putString("username", currUser.getUsername());
             outState.putString("loginTime", currUser.getLoginTime());
         }
 
-        // TODO - account for TOKEN as well
+        if (fcmToken != null) {
+            outState.putString("token", fcmToken.getToken());
+            outState.putString("registerTime", fcmToken.getRegisterTime());
+        }
     }
 
 
@@ -144,9 +157,73 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (currUser == null) {
-            Intent openSignIn = new Intent(this, SignInActivity.class);
-            activityResultLauncher.launch(openSignIn);
+            signIn();
         }
+    }
+
+
+    /**
+     * Opens the SignInActivity, such that users can sign in to the
+     * Stick It To 'Em app
+     */
+    public void signIn() {
+        Intent openSignIn = new Intent(this, SignInActivity.class);
+        activityResultLauncher.launch(openSignIn);
+    }
+
+
+    /**
+     * Stores the token of a particular instance of the Stick It To 'Em app
+     * with a user's username, within the Tokens node of the Firebase Realtime
+     * Database.
+     *
+     * @param user - the user with which a particular app instance's token
+     *             will be paired
+     */
+    public void pairToken(User user) {
+        if (fcmToken == null) {
+            Log.v(TAG, "Generating token");
+            generateToken(user);
+            return;
+        }
+
+        Log.v(TAG, "Pairing token");
+        database.getReference("Tokens").child(user.getUsername()).setValue(fcmToken);
+    }
+
+
+    /**
+     * Produces a token for a particular instance of an app, such
+     * that certain app installations may be identified for messaging purposes.
+     * Will also pair a user with the generated token, if a non-null User object
+     * is provided.
+     *
+     * @param user - a potential user with which the newly-generated token will
+     *             be paired
+     */
+    public void generateToken(User user) {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
+            @Override
+            public void onComplete(@NonNull Task<String> task) {
+                if (task.isSuccessful()) {
+                    String tokenString = task.getResult();
+                    fcmToken = new Token(tokenString,
+                            LocalDateTime.now().format(DateTimeFormatter
+                                    .ofPattern("MM/dd/uuuu H:m:s:S")));
+                    Log.v(TAG, fcmToken.toString());
+
+                    if (user != null) {
+                        pairToken(user);
+                    }
+
+                } else {
+                    Toast.makeText(MainActivity.this,
+                            "Unable to generate a token. Check internet connection.",
+                            Toast.LENGTH_LONG).show();
+                    Log.v(TAG, "Unable to generate token.");
+                }
+            }
+        });
     }
 
 
@@ -156,8 +233,22 @@ public class MainActivity extends AppCompatActivity {
      *             via click
      */
     public void logOut(View view) {
+        // Removes user from Tokens node
+        database.getReference("Tokens").child(currUser.getUsername())
+                .removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (!task.isSuccessful()) {
+                    Toast.makeText(MainActivity.this, "Something went wrong",
+                            Toast.LENGTH_LONG).show();
+                    Log.v(TAG, "Unable to remove user from Tokens node.");
+                }
+            }
+        });
+
         currUser = null;
-        // TODO un-pair user with token -- remove user from Tokens node
+
+        signIn();
     }
 
 

@@ -1,5 +1,7 @@
 package edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in;
 
+import androidx.annotation.NonNull;
+
 /**
  * Class representing users of the StickItToEm app
  *
@@ -42,5 +44,17 @@ public class User {
      */
     public String getLoginTime() {
         return this.loginTime;
+    }
+
+    /**
+     * Provides a String representation of a User, for logging purposes
+     *
+     * @return String representation of a User, for logging purposes
+     */
+    @NonNull
+    @Override
+    public String toString() {
+        return "Username: " + username +
+                ", LoginTime: " + loginTime;
     }
 }
