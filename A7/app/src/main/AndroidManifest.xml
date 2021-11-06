@@ -10,6 +10,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.A7">
         <activity
+            android:name=".messaging.SendMessageActivity"
+            android:exported="true" />
+        <activity
             android:name=".sign_in.SignInActivity"
             android:exported="true" />
         <activity

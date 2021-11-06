@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.ActivityMainBinding;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.SendMessageActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.SignInActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.Token;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
@@ -35,6 +36,7 @@ import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
     private final int SIGN_IN_ACTIVITY_CODE = 101;
+    private final int SEND_MESSAGE_ACTIVITY_CODE = 102;
 
     private FirebaseDatabase database;
     private ActivityMainBinding binding;
@@ -74,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Sets up the MainActivity, primarily initializing
-     * larger, more time-instensive objects
+     * larger, more time-intensive objects
      * @param savedInstanceState - information related to an active state
      *                           of the MainActivity, prior to orientation
      *                           or state change
@@ -224,6 +226,25 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+
+    /**
+     * Allows the current User to send a message to another registered user,
+     * who is currently signed in to the app.
+     */
+    public void openSendMessage(View view) {
+        if (currUser == null || fcmToken == null) {
+            return;
+        }
+
+        Intent openSendMessageActivity = new Intent(this,
+                SendMessageActivity.class);
+        openSendMessageActivity.putExtra("username", currUser.getUsername());
+        openSendMessageActivity.putExtra("loginTime", currUser.getLoginTime());
+        openSendMessageActivity.putExtra("token", fcmToken.getToken());
+        openSendMessageActivity.putExtra("registerTime", fcmToken.getRegisterTime());
+        activityResultLauncher.launch(openSendMessageActivity);
     }
 
 

@@ -11,4 +11,9 @@
     <string name="username_hint">Username</string>
     <string name="sign_in">Sign In</string>
     <string name="invalid_username">You must enter a username.</string>
+
+    <!-- Send Message Activity -->
+    <string name="recipient">Recipient</string>
+    <string name="recipient_hint">Recipient\'s username</string>
+    <string name="send">Send</string>
 </resources>

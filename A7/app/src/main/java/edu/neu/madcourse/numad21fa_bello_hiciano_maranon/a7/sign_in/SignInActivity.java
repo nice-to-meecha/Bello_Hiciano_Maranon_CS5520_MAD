@@ -28,7 +28,7 @@ public class SignInActivity extends AppCompatActivity {
 
     /**
      * Sets up the SignInActivity, primarily initializing
-     * larger, more time-instensive objects
+     * larger, more time-intensive objects
      * @param savedInstanceState - information related to an active state
      *                           of the SignInActivity, prior to orientation
      *                           or state change
@@ -47,7 +47,42 @@ public class SignInActivity extends AppCompatActivity {
         // Ensures error message is not visible when first opening
         // the Activity
         invalidUsernameMessage.setVisibility(View.INVISIBLE);
+
+        initializeSignInActivity(savedInstanceState);
     }
+
+    /**
+     * Saves the current state of the SignInActivity, should it
+     * undergo an orientation or state change.
+     *
+     * @param outState - a Bundle in which the current user's
+     *                 information and token (of the app instance)
+     *                 will be recorded
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putString("enterUsername", enterUsername.getText().toString());
+    }
+
+
+    /**
+     * Initializes the state of the SignInActivity, by setting the
+     * text of the EditText view to that which had already been typed,
+     * prior to an orientation or state change
+     *
+     * @param savedInstanceState - a Bundle in which the username
+     *                           typed within the EditText view
+     *                           will be recorded
+     */
+    public void initializeSignInActivity(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            enterUsername.setText(savedInstanceState.getString("enterUsername"));
+        }
+
+    }
+
 
     /**
      * Adds the provided username to an intent and sends it back
