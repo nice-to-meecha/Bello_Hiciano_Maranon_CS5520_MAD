@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "518188195147",
+    "project_id": "cs5520-a7-stickittoem",
+    "storage_bucket": "cs5520-a7-stickittoem.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:518188195147:android:fb98d66884bbae6fe11cce",
+        "android_client_info": {
+          "package_name": "edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "518188195147-0alvbgvct755hiqisarucqgtiik83eho.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_d3uK8JkOEYttCS3uAwaDeVK38CM67ag"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "518188195147-0alvbgvct755hiqisarucqgtiik83eho.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
