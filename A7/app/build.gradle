@@ -16,14 +16,6 @@ keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
 
-    signingConfigs {
-        release {
-            storeFile file(keystoreProperties['keystore'])
-            storePassword keystoreProperties['password']
-            keyPassword keystoreProperties['password']
-            keyAlias keystoreProperties['alias']
-        }
-    }
     buildFeatures {
         viewBinding = true
     }
