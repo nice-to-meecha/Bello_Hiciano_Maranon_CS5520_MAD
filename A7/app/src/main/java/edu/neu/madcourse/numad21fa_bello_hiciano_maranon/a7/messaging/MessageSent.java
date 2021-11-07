@@ -13,6 +13,7 @@ public class MessageSent {
     public String sender;
     public String recipient;
     public String stickerAlias;
+    public int stickerID;
     public String timeSent;
 
 
@@ -24,13 +25,15 @@ public class MessageSent {
      * @param sender - the username of the user who sent the message
      * @param recipient - the username of the recipient of the message
      * @param stickerAlias - the alias of the sticker sent in the message
+     * @param stickerID - the resource ID of the sticker sent in the message
      * @param timeSent - the time at which the message was sent
      */
     public MessageSent(String sender, String recipient, String stickerAlias,
-                       String timeSent) {
+                       int stickerID, String timeSent) {
         this.sender = sender;
         this.recipient = recipient;
         this.stickerAlias = stickerAlias;
+        this.stickerID = stickerID;
         this.timeSent = timeSent;
     }
 
@@ -40,7 +43,7 @@ public class MessageSent {
      * @return the username of the user who sent the message
      */
     public String getSender() {
-        return sender;
+        return this.sender;
     }
 
 
@@ -50,7 +53,7 @@ public class MessageSent {
      * @return the username of the recipient of the message
      */
     public String getRecipient() {
-        return recipient;
+        return this.recipient;
     }
 
 
@@ -60,9 +63,18 @@ public class MessageSent {
      * @return the alias of the sticker sent in the message
      */
     public String getStickerAlias() {
-        return stickerAlias;
+        return this.stickerAlias;
     }
 
+
+    /**
+     * Returns the resource ID of the sticker sent in the message
+     *
+     * @return the resource ID of the sticker sent in the message
+     */
+    public int getStickerID() {
+        return this.stickerID;
+    }
 
     /**
      * Returns the time at which the message was sent
@@ -70,8 +82,9 @@ public class MessageSent {
      * @return the time at which the message was sent
      */
     public String getTimeSent() {
-        return timeSent;
+        return this.timeSent;
     }
+
 
     /**
      * Provides a String representation of a MessageSent object
@@ -82,9 +95,10 @@ public class MessageSent {
     @Override
     public String toString() {
         return "Message {" +
-                "sender: " + sender +
-                ", recipient: " + recipient +
-                ", stickerAlias: " + stickerAlias +
+                "sender: " + this.sender +
+                ", recipient: " + this.recipient +
+                ", stickerAlias: " + this.stickerAlias +
+                ", stickerID: " + this.stickerID +
                 ", timeSent: " + timeSent +
                 '}';
     }

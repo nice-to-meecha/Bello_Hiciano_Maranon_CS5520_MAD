@@ -10,4 +10,5 @@
 
     <!-- Invalid/Error Colors-->
     <color name="invalid">#FF6030</color>
+    <color name="navy_blue">#00004D</color>
 </resources>

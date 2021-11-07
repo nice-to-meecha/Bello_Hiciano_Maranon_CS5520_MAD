@@ -61,6 +61,7 @@ public class SendMessageActivity extends AppCompatActivity {
     private Token fcmToken;
     private GridView stickerGrid;
     private ImageView selectedSticker;
+    private int selectedStickerResID;
     private EditText enterRecipient;
     private TextView invalidRecipient;
     private StickerGridAdapter adapter;
@@ -116,9 +117,9 @@ public class SendMessageActivity extends AppCompatActivity {
 
             stickerList = currUserAndTokenIntent.getParcelableArrayListExtra("stickerList");
 
-            int id = getResources().getIdentifier(stickerList.get(firstSticker).getLocation(),
-                    "drawable", getPackageName());
-            selectedSticker.setImageResource(id);
+            selectedStickerResID = getResources().getIdentifier(stickerList.get(firstSticker)
+                            .getLocation(), "drawable", getPackageName());
+            selectedSticker.setImageResource(selectedStickerResID);
             selectedSticker.setTransitionName(stickerList.get(firstSticker).getLocation());
 
         } else {
@@ -149,6 +150,7 @@ public class SendMessageActivity extends AppCompatActivity {
         outState.putString("token", fcmToken.getToken());
         outState.putString("registerTime", fcmToken.getRegisterTime());
         outState.putString("selectedSticker", selectedSticker.getTransitionName());
+        outState.putInt("selectedStickerResID", selectedStickerResID);
         outState.putParcelableArrayList("stickerList", stickerList);
         outState.putInt("invalidRecipient", invalidRecipient.getVisibility());
     }
@@ -180,11 +182,11 @@ public class SendMessageActivity extends AppCompatActivity {
                     savedInstanceState.getString("registerTime"));
         }
 
-        if (savedInstanceState.containsKey("selectedSticker")) {
-            int id = getResources().getIdentifier(
-                    savedInstanceState.getString("selectedSticker"),
-                    "drawable", getPackageName());
-            selectedSticker.setImageResource(id);
+        if (savedInstanceState.containsKey("selectedSticker") &&
+                savedInstanceState.containsKey("selectedStickerResID")) {
+            selectedSticker.setTransitionName(savedInstanceState.getString("selectedSticker"));
+            selectedStickerResID = savedInstanceState.getInt("selectedStickerResID");
+            selectedSticker.setImageResource(selectedStickerResID);
         }
 
         if (savedInstanceState.containsKey("stickerList")) {
@@ -214,9 +216,9 @@ public class SendMessageActivity extends AppCompatActivity {
                  * (https://stackoverflow.com/questions/21856260/how-can-i-convert-string-to-drawable)
                  * in order to set the drawable, from a String
                  */
-                int id = getResources().getIdentifier(currSticker.getLocation(),
+                selectedStickerResID = getResources().getIdentifier(currSticker.getLocation(),
                         "drawable", getPackageName());
-                selectedSticker.setImageResource(id);
+                selectedSticker.setImageResource(selectedStickerResID);
                 selectedSticker.setTransitionName(currSticker.getLocation());
             }
         });
@@ -321,8 +323,9 @@ public class SendMessageActivity extends AppCompatActivity {
             outputStream.write(jPayload.toString().getBytes());
             outputStream.close();
 
-            storeMessage(recipientUsername, jPayload.getString("to"),
-                    jPayload.getJSONObject("data").getString("sticker alias"));
+            storeMessage(recipientUsername,
+                    jPayload.getJSONObject("data").getString("sticker alias"),
+                    selectedStickerResID);
 
             InputStream inputStream = conn.getInputStream();
             logServerInput(inputStream);
@@ -340,17 +343,15 @@ public class SendMessageActivity extends AppCompatActivity {
      * @param recipientUsername - the username of the intended recipient of
      *                          the sticker message the current user is
      *                          attempting to send
-     * @param recipientToken - the token of the intended recipient of
-     *                       the sticker message the current user is
-     *                       attempting to send
      * @param stickerAlias - the alias of the sticker sent in the message
+     * @param stickerID - the resource ID of the sticker image
      */
-    public void storeMessage(String recipientUsername, String recipientToken,
-                             String stickerAlias) {
+    public void storeMessage(String recipientUsername, String stickerAlias, int stickerID) {
         int nextMessage = 1;
         MessageSent message = new MessageSent(currUser.getUsername(),
                 recipientUsername,
                 stickerAlias,
+                stickerID,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/uuuu H:m:s:S")));
 
         database.getReference("SentMessages").child(currUser.getUsername()).get()

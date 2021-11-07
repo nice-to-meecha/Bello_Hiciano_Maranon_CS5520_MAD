@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.ActivityMainBinding;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.DisplayMessagesSentActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.SendMessageActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.Sticker;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.SignInActivity;
@@ -41,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
     private final int SIGN_IN_ACTIVITY_CODE = 101;
     private final int SEND_MESSAGE_ACTIVITY_CODE = 102;
+    private final int DISPLAY_MESSAGES_SENT_ACTIVITY_CODE = 103;
 
     public FirebaseDatabase database;
     private ActivityMainBinding binding;
@@ -294,6 +296,21 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+
+    /**
+     * Allows the current user to view all messages sent, via the
+     * DisplayMessagesSentActivity
+     *
+     * @param view - the button used to start DisplayMessagesSentActivity
+     */
+    public void openSentMessageHistory(View view) {
+        Intent openDisplayMessagesSent = new Intent(this,
+                DisplayMessagesSentActivity.class);
+        openDisplayMessagesSent.putExtra("username", currUser.getUsername());
+        openDisplayMessagesSent.putExtra("loginTime", currUser.getLoginTime());
+        activityResultLauncher.launch(openDisplayMessagesSent);
     }
 
 
