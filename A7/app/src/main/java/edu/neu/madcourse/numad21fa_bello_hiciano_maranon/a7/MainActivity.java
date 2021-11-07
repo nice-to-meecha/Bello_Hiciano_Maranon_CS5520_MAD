@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private final int SIGN_IN_ACTIVITY_CODE = 101;
     private final int SEND_MESSAGE_ACTIVITY_CODE = 102;
 
-    private FirebaseDatabase database;
+    public FirebaseDatabase database;
     private ActivityMainBinding binding;
     private User currUser;
     private Token fcmToken;

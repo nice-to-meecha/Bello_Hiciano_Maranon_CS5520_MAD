@@ -1,5 +1,6 @@
 package edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -7,12 +8,34 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.FirebaseDatabase;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.MainActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.Token;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
@@ -27,14 +50,20 @@ import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.Activity
 public class SendMessageActivity extends AppCompatActivity {
     private final int SEND_MESSAGE_ACTIVITY_CODE = 102;
     private final String TAG = "SendMessageActivity";
+    private final String SERVER_KEY = "key=" + "AAAAeKZsXUs:APA91bEWmcC1OL_" +
+            "uOHQ8fXKziF7QLAxR7Fnp70kYor2nYpTA4-H2l8IXrXA9uemRczcF326MI5CsVQ" +
+            "0PypqyFaHTLsKt36O--rLNyH02M2_BoV4VqBmTg2UiOPmM7F0gEqsgZsDOeO7P";
 
     private ActivitySendMessageBinding binding;
     private User currUser;
     private Token fcmToken;
     private GridView stickerGrid;
     private ImageView selectedSticker;
+    private EditText enterRecipient;
+    private TextView invalidRecipient;
     private StickerGridAdapter adapter;
     private ArrayList<Sticker> stickerList;
+    private FirebaseDatabase database;
 
 
     /**
@@ -54,6 +83,10 @@ public class SendMessageActivity extends AppCompatActivity {
 
         stickerGrid = binding.stickerGrid;
         selectedSticker = binding.selectedSticker;
+        enterRecipient = binding.enterRecipient;
+        invalidRecipient = binding.invalidRecipientErrorMessage;
+
+        database = FirebaseDatabase.getInstance();
 
         initializeUserAndToken();
         initializeSendMessageActivity(savedInstanceState);
@@ -115,6 +148,7 @@ public class SendMessageActivity extends AppCompatActivity {
         outState.putString("registerTime", fcmToken.getRegisterTime());
         outState.putString("selectedSticker", selectedSticker.getTransitionName());
         outState.putParcelableArrayList("stickerList", stickerList);
+        outState.putInt("invalidRecipient", invalidRecipient.getVisibility());
     }
 
 
@@ -154,6 +188,11 @@ public class SendMessageActivity extends AppCompatActivity {
         if (savedInstanceState.containsKey("stickerList")) {
             stickerList = savedInstanceState.getParcelableArrayList("stickerList");
         }
+
+        if (savedInstanceState.containsKey("invalidRecipient")) {
+            invalidRecipient.setVisibility(
+                    savedInstanceState.getInt("invalidRecipient"));
+        }
     }
 
 
@@ -179,6 +218,133 @@ public class SendMessageActivity extends AppCompatActivity {
                 selectedSticker.setTransitionName(currSticker.getLocation());
             }
         });
+    }
+
+
+    /**
+     * Checks the status of the entered recipient, relaying an error message,
+     * (1) if the recipient is not signed in to the app or (2) the user does
+     * not exist.
+     * If the recipient is viable, the selected sticker will be sent.
+     *
+     * @param view - the button by which the current user is
+     *             able to send a message
+     */
+    public void checkRecipient(View view) {
+        String recipient = enterRecipient.getText().toString();
+
+        database.getReference("Tokens").child(recipient).child("token").get()
+                .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DataSnapshot> task) {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            if (task.getResult().getValue() != null) {
+                                Log.v(TAG, task.getResult().getValue().toString());
+                                String recipientToken = task.getResult().getValue().toString();
+                                sendFCMMessage(recipientToken);
+
+                            } else {
+                                invalidRecipient.setVisibility(View.VISIBLE);
+                            }
+
+                        } else {
+                            Toast.makeText(SendMessageActivity.this,
+                                    "Something went wrong. Check your internet connection.",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+    }
+
+
+    /**
+     * Sends a sticker message to a specified recipient
+     *
+     * @param recipientToken - the token of the intended recipient of
+     *                       the sticker message the current user is
+     *                       attempting to send
+     */
+    public void sendFCMMessage(String recipientToken) {
+        JSONObject jPayload = new JSONObject();
+        JSONObject jNotification = new JSONObject();
+        JSONObject jData = new JSONObject();
+
+        try {
+            jNotification.put("title", "Sticker Alert!");
+            jNotification.put("body", currUser.getUsername() +
+                    " just sent you a sticker!");
+
+            jData.put("sticker alias", selectedSticker.getTransitionName());
+
+            jPayload.put("priority", "high");
+            jPayload.put("notification", jNotification);
+            jPayload.put("data", jData);
+            jPayload.put("to", recipientToken);
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    connectWithServer(jPayload);
+                }
+            }).start();
+
+
+        } catch (JSONException jsonException) {
+            Log.v(TAG, Arrays.toString(jsonException.getStackTrace()));
+        }
+    }
+
+
+    /**
+     * Connects with and sends the desired sticker to the server
+     *
+     * @param jPayload - the message to be sent to the server
+     */
+    public void connectWithServer(JSONObject jPayload) {
+        try {
+            URL url = new URL("https://fcm.googleapis.com/fcm/send");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Authorization", SERVER_KEY);
+            conn.setDoOutput(true);
+
+            OutputStream outputStream = conn.getOutputStream();
+            outputStream.write(jPayload.toString().getBytes());
+            outputStream.close();
+
+            InputStream inputStream = conn.getInputStream();
+            logServerInput(inputStream);
+
+        } catch (IOException ioException) {
+            Log.v(TAG, Arrays.toString(ioException.getStackTrace()));
+
+        }
+    }
+
+
+    /**
+     * Logs the message returned by the server, following device-to-device
+     * messaging.
+     *
+     * @param inputStream - the stream by which input is received from
+     *                    the server
+     */
+    public void logServerInput(InputStream inputStream) {
+        StringBuilder message = new StringBuilder();
+        String line;
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            while ((line = reader.readLine()) != null) {
+                message.append(line);
+            }
+
+            Log.v(TAG, message.toString().replace(",", ",\n"));
+            inputStream.close();
+
+        } catch (IOException ioException) {
+            Log.v(TAG, Arrays.toString(ioException.getStackTrace()));
+        }
     }
 
 }
