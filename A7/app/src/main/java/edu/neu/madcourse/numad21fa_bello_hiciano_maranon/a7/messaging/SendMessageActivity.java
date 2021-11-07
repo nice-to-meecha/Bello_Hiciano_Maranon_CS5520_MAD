@@ -32,6 +32,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -241,7 +243,7 @@ public class SendMessageActivity extends AppCompatActivity {
                             if (task.getResult().getValue() != null) {
                                 Log.v(TAG, task.getResult().getValue().toString());
                                 String recipientToken = task.getResult().getValue().toString();
-                                sendFCMMessage(recipientToken);
+                                sendFCMMessage(recipient, recipientToken);
 
                             } else {
                                 invalidRecipient.setVisibility(View.VISIBLE);
@@ -260,11 +262,14 @@ public class SendMessageActivity extends AppCompatActivity {
     /**
      * Sends a sticker message to a specified recipient
      *
+     * @param recipientUsername - the username of the intended recipient of
+     *                          the sticker message the current user is
+     *                          attempting to send
      * @param recipientToken - the token of the intended recipient of
      *                       the sticker message the current user is
      *                       attempting to send
      */
-    public void sendFCMMessage(String recipientToken) {
+    public void sendFCMMessage(String recipientUsername, String recipientToken) {
         JSONObject jPayload = new JSONObject();
         JSONObject jNotification = new JSONObject();
         JSONObject jData = new JSONObject();
@@ -284,7 +289,7 @@ public class SendMessageActivity extends AppCompatActivity {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    connectWithServer(jPayload);
+                    connectWithServer(recipientUsername, jPayload);
                 }
             }).start();
 
@@ -298,9 +303,12 @@ public class SendMessageActivity extends AppCompatActivity {
     /**
      * Connects with and sends the desired sticker to the server
      *
+     * @param recipientUsername - the username of the intended recipient of
+     *                          the sticker message the current user is
+     *                          attempting to send
      * @param jPayload - the message to be sent to the server
      */
-    public void connectWithServer(JSONObject jPayload) {
+    public void connectWithServer(String recipientUsername, JSONObject jPayload) {
         try {
             URL url = new URL("https://fcm.googleapis.com/fcm/send");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -313,13 +321,90 @@ public class SendMessageActivity extends AppCompatActivity {
             outputStream.write(jPayload.toString().getBytes());
             outputStream.close();
 
+            storeMessage(recipientUsername, jPayload.getString("to"),
+                    jPayload.getJSONObject("data").getString("sticker alias"));
+
             InputStream inputStream = conn.getInputStream();
             logServerInput(inputStream);
 
-        } catch (IOException ioException) {
-            Log.v(TAG, Arrays.toString(ioException.getStackTrace()));
+        } catch (IOException | JSONException exception) {
+            Log.v(TAG, Arrays.toString(exception.getStackTrace()));
 
         }
+    }
+
+
+    /**
+     * Sends a sticker message to a specified recipient
+     *
+     * @param recipientUsername - the username of the intended recipient of
+     *                          the sticker message the current user is
+     *                          attempting to send
+     * @param recipientToken - the token of the intended recipient of
+     *                       the sticker message the current user is
+     *                       attempting to send
+     * @param stickerAlias - the alias of the sticker sent in the message
+     */
+    public void storeMessage(String recipientUsername, String recipientToken,
+                             String stickerAlias) {
+        int nextMessage = 1;
+        MessageSent message = new MessageSent(currUser.getUsername(),
+                recipientUsername,
+                stickerAlias,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/uuuu H:m:s:S")));
+
+        database.getReference("SentMessages").get()
+                .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    if (task.getResult().hasChildren()) {
+                        int messageNumber = (int) task.getResult().getChildrenCount() +
+                                nextMessage;
+                        // Stores all messages sent by a particular user, within
+                        // that user's node
+                        task.getResult().getRef().child(currUser.getUsername())
+                                .child("Message " + messageNumber)
+                                .setValue(message);
+
+                    } else {
+                        task.getResult().getRef().child(currUser.getUsername())
+                                .child("Message " + nextMessage)
+                                .setValue(message);
+                    }
+
+                } else {
+                    Log.v(TAG, "Something went wrong. Check your internet connection.");
+                }
+            }
+        });
+
+
+        database.getReference("ReceivedMessages").get()
+                .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DataSnapshot> task) {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            if (task.getResult().hasChildren()) {
+                                int messageNumber = (int) task.getResult().getChildrenCount() +
+                                        nextMessage;
+                                // Stores all messages sent by a particular user, within
+                                // that user's node
+                                task.getResult().getRef().child(recipientUsername)
+                                        .child("Message " + messageNumber)
+                                        .setValue(message);
+
+                            } else {
+                                task.getResult().getRef().child(recipientUsername)
+                                        .child("Message " + nextMessage)
+                                        .setValue(message);
+                            }
+
+                        } else {
+                            Log.v(TAG, "Something went wrong. Check your internet connection.");
+                        }
+                    }
+                });
     }
 
 
