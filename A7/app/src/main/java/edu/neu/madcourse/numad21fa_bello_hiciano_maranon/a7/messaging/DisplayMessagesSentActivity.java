@@ -38,6 +38,14 @@ public class DisplayMessagesSentActivity extends AppCompatActivity {
     private SenderRecipientRViewAdapter recyclerViewAdapter;
     private RecyclerView.LayoutManager layoutManager;
 
+
+    /**
+     * Sets up the DisplayMessagesSentActivity, primarily initializing
+     * larger, more time-intensive objects
+     * @param savedInstanceState - information related to an active state
+     *                           of the DisplayMessagesSentActivity, prior to orientation
+     *                           or state change
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,14 +60,15 @@ public class DisplayMessagesSentActivity extends AppCompatActivity {
             initializeMessageList();
 
         } else {
-            initializeDisplayMessagesSent();
+            initializeDisplayMessagesSent(savedInstanceState);
+            createRecyclerView();
         }
     }
 
 
     /**
-     * When the Activity is first opened, the messages
-     * to be displayed are generated here
+     * Generates the messages to be displayed, when the
+     * DisplayMessagesSentActivity is first opened
      */
     public void initializeMessageList() {
         Intent currUserIntent = getIntent();
@@ -78,6 +87,12 @@ public class DisplayMessagesSentActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Gets all messages sent by the provided user from the database
+     * in which they are stored
+     *
+     * @param user - the user for which sent messages will be retrieved
+     */
     private void retrieveMessagesFromDatabase(User user) {
         database.getReference("SentMessages").child(user.getUsername())
                 .get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
@@ -108,20 +123,43 @@ public class DisplayMessagesSentActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Saves the current state of the DisplaySentMessagesActivity,
+     * should it undergo an orientation or state change.
+     *
+     * @param outState - a Bundle containing sent messages (of the
+     *                 current user), from which the current state
+     *                 of the DisplayMessagesSentActivity can be updated
+     */
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
-
+        outState.putParcelableArrayList("messageList", messageList);
     }
 
 
-    public void initializeDisplayMessagesSent() {
 
+    /**
+     * Restores the state of the DisplaySentMessagesActivity, prior to an
+     * orientation or state change, such that sent messages will not be lost.
+     *
+     * @param savedInstanceState - a Bundle containing sent messages (of the
+     *                           current user), from which the current state
+     *                           of the DisplayMessagesSentActivity can be updated
+     */
+    public void initializeDisplayMessagesSent(Bundle savedInstanceState) {
 
+        if (savedInstanceState.containsKey("messageList")) {
+            messageList = savedInstanceState.getParcelableArrayList("messageList");
+        }
     }
 
 
+    /**
+     * Generates the RecyclerView to display the messages sent
+     * by the current user.
+     */
     public void createRecyclerView() {
         Log.v(TAG, "Creating recycler view");
         layoutManager = new LinearLayoutManager(this);

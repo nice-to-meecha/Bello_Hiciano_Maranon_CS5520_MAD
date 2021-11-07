@@ -338,5 +338,9 @@ public class MainActivity extends AppCompatActivity {
         signIn();
     }
 
-
+    @Override
+    public void finish() {
+        logOut(binding.logoutButton);
+        super.finish();
+    }
 }
