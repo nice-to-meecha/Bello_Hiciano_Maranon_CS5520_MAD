@@ -353,7 +353,7 @@ public class SendMessageActivity extends AppCompatActivity {
                 stickerAlias,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/uuuu H:m:s:S")));
 
-        database.getReference("SentMessages").get()
+        database.getReference("SentMessages").child(currUser.getUsername()).get()
                 .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DataSnapshot> task) {
@@ -363,13 +363,11 @@ public class SendMessageActivity extends AppCompatActivity {
                                 nextMessage;
                         // Stores all messages sent by a particular user, within
                         // that user's node
-                        task.getResult().getRef().child(currUser.getUsername())
-                                .child("Message " + messageNumber)
+                        task.getResult().getRef().child("Message " + messageNumber)
                                 .setValue(message);
 
                     } else {
-                        task.getResult().getRef().child(currUser.getUsername())
-                                .child("Message " + nextMessage)
+                        task.getResult().getRef().child("Message " + nextMessage)
                                 .setValue(message);
                     }
 
@@ -380,7 +378,7 @@ public class SendMessageActivity extends AppCompatActivity {
         });
 
 
-        database.getReference("ReceivedMessages").get()
+        database.getReference("ReceivedMessages").child(recipientUsername).get()
                 .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<DataSnapshot> task) {
@@ -390,13 +388,11 @@ public class SendMessageActivity extends AppCompatActivity {
                                         nextMessage;
                                 // Stores all messages sent by a particular user, within
                                 // that user's node
-                                task.getResult().getRef().child(recipientUsername)
-                                        .child("Message " + messageNumber)
+                                task.getResult().getRef().child("Message " + messageNumber)
                                         .setValue(message);
 
                             } else {
-                                task.getResult().getRef().child(recipientUsername)
-                                        .child("Message " + nextMessage)
+                                task.getResult().getRef().child("Message " + nextMessage)
                                         .setValue(message);
                             }
 
