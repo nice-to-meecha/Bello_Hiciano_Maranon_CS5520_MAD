@@ -21,7 +21,8 @@
         android:id="@+id/messageHistoryButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/message_history"
+        android:onClick="openMessagesReceived"
+        android:text="@string/messages_received"
         app:layout_constraintBottom_toTopOf="@+id/sentMessagesButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -32,11 +33,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="openSentMessageHistory"
-        android:text="@string/sent_messages"
-        app:layout_constraintBottom_toTopOf="@id/logoutButton"
+        android:text="@string/messages_sent"
+        app:layout_constraintBottom_toTopOf="@id/stickerHistoryButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/messageHistoryButton" />
+
+    <Button
+        android:id="@+id/stickerHistoryButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sticker_history"
+        app:layout_constraintBottom_toTopOf="@id/logoutButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/sentMessagesButton" />
 
     <Button
         android:id="@+id/logoutButton"
@@ -47,6 +58,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/sentMessagesButton" />
+        app:layout_constraintTop_toBottomOf="@id/stickerHistoryButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

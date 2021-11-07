@@ -7,19 +7,19 @@
     tools:context=".messaging.DisplayMessagesSentActivity">
 
     <TextView
-        android:id="@+id/sentMessagesHeader"
+        android:id="@+id/receivedMessagesHeader"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/sent_messages"
+        android:text="@string/messages_received"
         android:textSize="40sp"
-        app:layout_constraintBottom_toTopOf="@id/sentMessagesRecyclerView"
+        app:layout_constraintBottom_toTopOf="@id/receivedMessagesRecyclerView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.05"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/sentMessagesRecyclerView"
+        android:id="@+id/receivedMessagesRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="20dp"
@@ -29,6 +29,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/sentMessagesHeader" />
+        app:layout_constraintTop_toBottomOf="@id/receivedMessagesHeader" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

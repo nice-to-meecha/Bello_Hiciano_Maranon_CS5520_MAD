@@ -25,9 +25,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.ActivityMainBinding;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.DisplayMessagesReceivedActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.DisplayMessagesSentActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.SendMessageActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.Sticker;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.StickerHistoryActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.SignInActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.Token;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
@@ -43,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private final int SIGN_IN_ACTIVITY_CODE = 101;
     private final int SEND_MESSAGE_ACTIVITY_CODE = 102;
     private final int DISPLAY_MESSAGES_SENT_ACTIVITY_CODE = 103;
+    private final int DISPLAY_MESSAGES_RECEIVED_ACTIVITY_CODE = 104;
+    private final int STICKER_HISTORY_ACTIVITY_CODE = 105;
 
     public FirebaseDatabase database;
     private ActivityMainBinding binding;
@@ -311,6 +315,35 @@ public class MainActivity extends AppCompatActivity {
         openDisplayMessagesSent.putExtra("username", currUser.getUsername());
         openDisplayMessagesSent.putExtra("loginTime", currUser.getLoginTime());
         activityResultLauncher.launch(openDisplayMessagesSent);
+    }
+
+
+    /**
+     * Allows the current user to view all messages received, via the
+     * DisplayMessagesReceivedActivity
+     *
+     * @param view - the button used to start DisplayMessagesReceivedActivity
+     */
+    public void openMessagesReceived(View view) {
+        Intent openDisplayMessagesReceived = new Intent(this,
+                DisplayMessagesReceivedActivity.class);
+        openDisplayMessagesReceived.putExtra("username", currUser.getUsername());
+        openDisplayMessagesReceived.putExtra("loginTime", currUser.getLoginTime());
+        activityResultLauncher.launch(openDisplayMessagesReceived);
+    }
+
+
+    /**
+     * Allows the current user to view all the number of each sticker
+     * sent in messages
+     *
+     * @param view - the button used to start StickerHistoryActivity
+     */
+    public void openStickerHistory(View view) {
+        Intent openStickerHistory = new Intent(this, StickerHistoryActivity.class);
+        openStickerHistory.putExtra("username", currUser.getUsername());
+        openStickerHistory.putExtra("loginTime", currUser.getLoginTime());
+        activityResultLauncher.launch(openStickerHistory);
     }
 
 

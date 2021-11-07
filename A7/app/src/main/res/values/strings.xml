@@ -26,4 +26,9 @@
     <!-- Message History -->
     <string name="sent_messages">Sent Messages</string>
     <string name="sticker_content_description">Sticker Sent</string>
+    <string name="messages_received">Messages Received</string>
+    <string name="messages_sent">Messages Sent</string>
+    
+    <!-- Sticker History -->
+    <string name="sticker_history">Sticker History</string>
 </resources>
