@@ -1,22 +1,55 @@
 package edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging;
 
-import android.graphics.drawable.Drawable;
-import android.media.Image;
-import android.net.Uri;
-import android.widget.ImageView;
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import androidx.annotation.NonNull;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
 
 /**
  * Class representing the stickers that users are able to send
- * to others
+ * to others.
+ *
+ * The Parcelable elements presented below were implemented,
+ * based on the code found at the following link:
+ * https://www.vogella.com/tutorials/AndroidParcelable/article.html
  *
  * @author bello
  */
-public class Sticker {
+public class Sticker implements Parcelable {
 
     private String alias;
     private String location;
+
+
+    /**
+     * Utilized to create a Parcelable object from a Sticker object
+     */
+    public static final Parcelable.Creator<Sticker> CREATOR =
+            new Parcelable.Creator<Sticker>() {
+        public Sticker createFromParcel(Parcel in) {
+            return new Sticker(in);
+        }
+
+        public Sticker[] newArray(int size) {
+            return new Sticker[size];
+        }
+    };
+
+
+    /**
+     * Generates a Sticker object, from a Parcel object,
+     * to which a Sticker's properties have been written
+     *
+     * @param in - the Parcel object retaining saved properties
+     *           of a Sticker
+     */
+    public Sticker(Parcel in) {
+        this.alias = in.readString();
+        this.location = in.readString();
+    }
+
 
     /**
      * Generates a Sticker object, using its moniker (alias) and
@@ -47,5 +80,43 @@ public class Sticker {
      */
     public String getLocation() {
         return this.location;
+    }
+
+
+    /**
+     * Unknown function; this is only here, due to the requirement
+     * that this be implemented with a class that extends Parcelable
+     *
+     * @return unknown
+     */
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+
+    /**
+     * Converts a Sticker into a Parcel, using its
+     * alias and location properties
+     *
+     * @param parcel - the Parcel to be created from a Sticker
+     * @param i - not defined; flags of some sort(?)
+     */
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(this.alias);
+        parcel.writeString(this.location);
+    }
+
+    /**
+     * Provides a String representation of a Sticker object
+     *
+     * @return a String representation of a Sticker object
+     */
+    @NonNull
+    @Override
+    public String toString() {
+        return "Alias: " + this.alias +
+                ", Location: " + this.location;
     }
 }

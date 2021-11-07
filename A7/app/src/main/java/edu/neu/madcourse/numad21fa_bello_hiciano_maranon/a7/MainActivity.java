@@ -9,20 +9,24 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.ActivityMainBinding;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.SendMessageActivity;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.Sticker;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.SignInActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.Token;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
@@ -42,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private User currUser;
     private Token fcmToken;
+    private ArrayList<Sticker> stickerList;
 
 
     /*
@@ -92,6 +97,13 @@ public class MainActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
 
         initializeMainActivity(savedInstanceState);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                generateStickers();
+            }
+        }).start();
     }
 
 
@@ -120,6 +132,13 @@ public class MainActivity extends AppCompatActivity {
             fcmToken = new Token(savedInstanceState.getString("token"),
                     savedInstanceState.getString("registerTime"));
         }
+
+        if (savedInstanceState.containsKey("stickerList")) {
+            stickerList = new ArrayList<>();
+            for (Parcelable parcel: savedInstanceState.getParcelableArrayList("stickerList")) {
+                stickerList.add((Sticker) parcel);
+            }
+        }
     }
 
 
@@ -143,6 +162,10 @@ public class MainActivity extends AppCompatActivity {
         if (fcmToken != null) {
             outState.putString("token", fcmToken.getToken());
             outState.putString("registerTime", fcmToken.getRegisterTime());
+        }
+
+        if (stickerList != null) {
+            outState.putParcelableArrayList("stickerList", stickerList);
         }
     }
 
@@ -244,7 +267,33 @@ public class MainActivity extends AppCompatActivity {
         openSendMessageActivity.putExtra("loginTime", currUser.getLoginTime());
         openSendMessageActivity.putExtra("token", fcmToken.getToken());
         openSendMessageActivity.putExtra("registerTime", fcmToken.getRegisterTime());
+        openSendMessageActivity.putParcelableArrayListExtra("stickerList", stickerList);
         activityResultLauncher.launch(openSendMessageActivity);
+    }
+
+
+    /**
+     * Retrieves the aliases and locations of all Stickers
+     * that a particular user can access
+     */
+    public void generateStickers() {
+        database.getReference("Stickers").get().addOnCompleteListener(
+                new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if (task.isSuccessful()) {
+                    if (task.getResult() != null) {
+                        Log.v(TAG, "Making sticker list");
+                        stickerList = new ArrayList<>();
+                        for (DataSnapshot child: task.getResult().getChildren()) {
+                            stickerList.add(new Sticker(child.getKey(),
+                                    child.getValue().toString()));
+                        }
+                        Log.v(TAG, "Stickers: " + stickerList.toString());
+                    }
+                }
+            }
+        });
     }
 
 

@@ -3,15 +3,14 @@ package edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.Token;
@@ -27,6 +26,7 @@ import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.Activity
  */
 public class SendMessageActivity extends AppCompatActivity {
     private final int SEND_MESSAGE_ACTIVITY_CODE = 102;
+    private final String TAG = "SendMessageActivity";
 
     private ActivitySendMessageBinding binding;
     private User currUser;
@@ -66,10 +66,12 @@ public class SendMessageActivity extends AppCompatActivity {
     /**
      * Using the intent provided by the MainActivity, the current User
      * and associated token are initialized, such that cloud messaging
-     * may commence.
+     * may commence. Available stickers are also processed from the intent.
      */
     public void initializeUserAndToken() {
+        int firstSticker = 0;
         Intent currUserAndTokenIntent = getIntent();
+
         if (currUserAndTokenIntent != null) {
             currUser = new User(currUserAndTokenIntent.getStringExtra("username"),
                     currUserAndTokenIntent.getStringExtra("loginTime"));
@@ -77,14 +79,18 @@ public class SendMessageActivity extends AppCompatActivity {
             fcmToken = new Token(currUserAndTokenIntent.getStringExtra("token"),
                     currUserAndTokenIntent.getStringExtra("registerTime"));
 
+            stickerList = currUserAndTokenIntent.getParcelableArrayListExtra("stickerList");
+
+            int id = getResources().getIdentifier(stickerList.get(firstSticker).getLocation(),
+                    "drawable", getPackageName());
+            selectedSticker.setImageResource(id);
+            selectedSticker.setTransitionName(stickerList.get(firstSticker).getLocation());
+
         } else {
             Toast.makeText(this, "Cannot send message without user and token.",
                     Toast.LENGTH_LONG).show();
-            try {
-                wait(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
+            Log.v(TAG, "User and token unavailable");
 
             finish();
         }
@@ -107,6 +113,8 @@ public class SendMessageActivity extends AppCompatActivity {
         outState.putString("loginTime", currUser.getLoginTime());
         outState.putString("token", fcmToken.getToken());
         outState.putString("registerTime", fcmToken.getRegisterTime());
+        outState.putString("selectedSticker", selectedSticker.getTransitionName());
+        outState.putParcelableArrayList("stickerList", stickerList);
     }
 
 
@@ -135,40 +143,42 @@ public class SendMessageActivity extends AppCompatActivity {
             fcmToken = new Token(savedInstanceState.getString("token"),
                     savedInstanceState.getString("registerTime"));
         }
+
+        if (savedInstanceState.containsKey("selectedSticker")) {
+            int id = getResources().getIdentifier(
+                    savedInstanceState.getString("selectedSticker"),
+                    "drawable", getPackageName());
+            selectedSticker.setImageResource(id);
+        }
+
+        if (savedInstanceState.containsKey("stickerList")) {
+            stickerList = savedInstanceState.getParcelableArrayList("stickerList");
+        }
     }
 
 
+    /**
+     * Initializes the GridView, which will display the stickers
+     * that users can send
+     */
     public void gridSetUp() {
-        stickerList = generateStickerList();
         adapter = new StickerGridAdapter(this, stickerList);
         stickerGrid.setAdapter(adapter);
         stickerGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Sticker currSticker = stickerList.get(i);
-                int id = getResources().getIdentifier(currSticker.getLocation(), "drawable", getPackageName());
+                /*
+                 * I utilized the code provided in the first answer to this post
+                 * (https://stackoverflow.com/questions/21856260/how-can-i-convert-string-to-drawable)
+                 * in order to set the drawable, from a String
+                 */
+                int id = getResources().getIdentifier(currSticker.getLocation(),
+                        "drawable", getPackageName());
                 selectedSticker.setImageResource(id);
+                selectedSticker.setTransitionName(currSticker.getLocation());
             }
         });
     }
-
-
-    public ArrayList<Sticker> generateStickerList() {
-        Sticker sticker1 = new Sticker("android logo", "ic_android_black_100dp");
-        Sticker sticker2 = new Sticker("sun", "a7_home_icon_foreground");
-        ArrayList<Sticker> newList = new ArrayList<>();
-        newList.add(sticker1);
-        newList.add(sticker2);
-        newList.add(sticker1);
-        newList.add(sticker2);
-        newList.add(sticker1);
-        newList.add(sticker2);
-        newList.add(sticker1);
-        newList.add(sticker2);
-        newList.add(sticker1);
-        return newList;
-
-    }
-
 
 }

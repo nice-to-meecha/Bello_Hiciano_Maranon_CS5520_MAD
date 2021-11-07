@@ -3,6 +3,6 @@
     android:id="@+id/stickerGridLayout"
     android:layout_width="100dp"
     android:layout_height="100dp"
-    android:src="@drawable/ic_android_black_100dp">
+    android:src="@drawable/android_black_100dp">
 
 </ImageView>
