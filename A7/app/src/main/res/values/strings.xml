@@ -31,4 +31,6 @@
     
     <!-- Sticker History -->
     <string name="sticker_history">Sticker History</string>
+    <string name="total_stickers">Total Stickers Used: %1$d</string>
+    <string name="individual_sticker_count">%1$d</string>
 </resources>

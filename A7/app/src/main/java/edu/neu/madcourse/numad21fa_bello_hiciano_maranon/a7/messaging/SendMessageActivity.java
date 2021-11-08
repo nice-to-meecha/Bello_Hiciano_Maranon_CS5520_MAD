@@ -281,7 +281,7 @@ public class SendMessageActivity extends AppCompatActivity {
             jNotification.put("body", currUser.getUsername() +
                     " just sent you a sticker!");
 
-            jData.put("sticker alias", selectedSticker.getTransitionName());
+            jData.put("sticker location", selectedSticker.getTransitionName());
 
             jPayload.put("priority", "high");
             jPayload.put("notification", jNotification);
@@ -324,7 +324,7 @@ public class SendMessageActivity extends AppCompatActivity {
             outputStream.close();
 
             storeMessage(recipientUsername,
-                    jPayload.getJSONObject("data").getString("sticker alias"),
+                    jPayload.getJSONObject("data").getString("sticker location"),
                     selectedStickerResID);
 
             InputStream inputStream = conn.getInputStream();
@@ -343,14 +343,14 @@ public class SendMessageActivity extends AppCompatActivity {
      * @param recipientUsername - the username of the intended recipient of
      *                          the sticker message the current user is
      *                          attempting to send
-     * @param stickerAlias - the alias of the sticker sent in the message
+     * @param stickerLocation - the file name of the sticker sent in the message
      * @param stickerID - the resource ID of the sticker image
      */
-    public void storeMessage(String recipientUsername, String stickerAlias, int stickerID) {
+    public void storeMessage(String recipientUsername, String stickerLocation, int stickerID) {
         int nextMessage = 1;
         MessageSent message = new MessageSent(currUser.getUsername(),
                 recipientUsername,
-                stickerAlias,
+                stickerLocation,
                 stickerID,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/uuuu H:m:s:S")));
 

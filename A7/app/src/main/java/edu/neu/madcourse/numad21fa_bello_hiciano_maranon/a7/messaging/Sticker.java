@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import java.util.Objects;
+
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
 
 /**
@@ -18,9 +20,12 @@ import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
  * @author bello
  */
 public class Sticker implements Parcelable {
+    private int INITIALIZE_COUNT = 0;
+    private int INCREMENT_COUNT = 1;
 
     private String alias;
     private String location;
+    private int count;
 
 
     /**
@@ -48,6 +53,7 @@ public class Sticker implements Parcelable {
     public Sticker(Parcel in) {
         this.alias = in.readString();
         this.location = in.readString();
+        this.count = in.readInt();
     }
 
 
@@ -60,6 +66,7 @@ public class Sticker implements Parcelable {
     public Sticker(String alias, String location) {
         this.alias = alias;
         this.location = location;
+        this.count = INITIALIZE_COUNT;
     }
 
 
@@ -80,6 +87,38 @@ public class Sticker implements Parcelable {
      */
     public String getLocation() {
         return this.location;
+    }
+
+
+    /**
+     * Returns the recorded count of the number of times a sticker
+     * has been used
+     *
+     * @return the recorded count of the number of times a sticker
+     * has been used
+     */
+    public int getCount() {
+        return this.count;
+    }
+
+
+    /**
+     * Increases the recorded count of the use of a particular sticker
+     * by 1
+     */
+    public void incrementCount() {
+        this.count += INCREMENT_COUNT;
+    }
+
+
+    /**
+     * Sets the recorded count of the number of times a sticker
+     * has been used
+     *
+     * @param count - the number of times a sticker has been used
+     */
+    public void setCount(int count) {
+        this.count = count;
     }
 
 
@@ -106,6 +145,7 @@ public class Sticker implements Parcelable {
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(this.alias);
         parcel.writeString(this.location);
+        parcel.writeInt(this.count);
     }
 
     /**
@@ -117,6 +157,40 @@ public class Sticker implements Parcelable {
     @Override
     public String toString() {
         return "Alias: " + this.alias +
-                ", Location: " + this.location;
+                ", Location: " + this.location +
+                ", Count: " + this.count;
+    }
+
+
+    /**
+     * Provides a basis for which Sticker objects may be compared,
+     * in terms of equality
+     *
+     * @param o - the object to be compared with a Sticker object
+     *
+     * @return boolean indicating the equality of a Sticker object
+     * with the provided object (o)
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Sticker sticker = (Sticker) o;
+        return INITIALIZE_COUNT == sticker.INITIALIZE_COUNT &&
+                INCREMENT_COUNT == sticker.INCREMENT_COUNT &&
+                count == sticker.count &&
+                alias.equals(sticker.alias) &&
+                location.equals(sticker.location);
+    }
+
+
+    /**
+     * Produces a hash code for a Sticker object
+     *
+     * @return a hash code for a Sticker object
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(INITIALIZE_COUNT, INCREMENT_COUNT, alias, location, count);
     }
 }
