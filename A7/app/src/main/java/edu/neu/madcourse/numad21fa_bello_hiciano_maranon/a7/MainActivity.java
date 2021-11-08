@@ -5,8 +5,13 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -16,13 +21,18 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.ActivityMainBinding;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.DisplayMessagesReceivedActivity;
@@ -47,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
     private final int DISPLAY_MESSAGES_SENT_ACTIVITY_CODE = 103;
     private final int DISPLAY_MESSAGES_RECEIVED_ACTIVITY_CODE = 104;
     private final int STICKER_HISTORY_ACTIVITY_CODE = 105;
+    private final String CHANNEL_ID = "1";
+    private NotificationManager notificationManager;
 
     public FirebaseDatabase database;
     private ActivityMainBinding binding;
@@ -76,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
                                                 .ofPattern("MM/dd/uuuu H:m:s:S")));
                                 database.getReference("Users")
                                         .child(currUser.getUsername()).setValue(currUser);
-
+                                addNotificationListner();
                                 pairToken(currUser);
                             }
                             break;
@@ -99,9 +111,8 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
-
+        createNotificationChannel();
         database = FirebaseDatabase.getInstance();
-
         initializeMainActivity(savedInstanceState);
 
         new Thread(new Runnable() {
@@ -110,6 +121,16 @@ public class MainActivity extends AppCompatActivity {
                 generateStickers();
             }
         }).start();
+    }
+
+    private void createNotificationChannel() {
+        CharSequence name = "mainChannel";
+        String description = "mainDescription";
+        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+        NotificationChannel channel = new NotificationChannel("1", name, importance);
+        channel.setDescription(description);
+        notificationManager = getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
     }
 
 
@@ -145,6 +166,69 @@ public class MainActivity extends AppCompatActivity {
                 stickerList.add((Sticker) parcel);
             }
         }
+
+    }
+
+    /**
+     * https://stackoverflow.com/questions/53138762/notificationcompat-builder-not-accepting-channel-id-as-argument
+     */
+    private void addNotificationListner() {
+        if (currUser == null) {
+            return;
+        }
+        database.getReference("ReceivedMessages")
+                .child(currUser.getUsername())
+                .getRef()
+                .addChildEventListener(new ChildEventListener() {
+
+                    @Override
+                    public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                        if (!snapshot.exists()) {
+                            return;
+                        }
+                        Map<Object, Object> data = (HashMap<Object, Object>)snapshot.getValue();
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/uuuu H:m:s:S");
+                        LocalDateTime dateTime = LocalDateTime.parse((String)data.get("timeSent"), formatter);
+                        int second1 = dateTime.getSecond() + 60 * dateTime.getMinute() + (60 * 60 * dateTime.getHour());
+                        LocalDateTime timeNow = LocalDateTime.now();
+                        int second2 = timeNow.getSecond() + 60 * timeNow.getMinute() + (60 * 60 * timeNow.getHour());
+                        if (second2 - second1 > 15) {
+                            return;
+                        }
+                        long stickerID = (long)data.get("stickerID");
+                        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(MainActivity.this, "1")
+                                .setSmallIcon((int)stickerID)
+                                .setBadgeIconType((int)stickerID)
+                                .setContentTitle("Sticker alert!")
+                                .setContentText((String)data.get("sender") + " just sent you a sticker!")
+                                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                        PendingIntent pi = PendingIntent.getActivity(MainActivity.this, 0, getIntent(), PendingIntent.FLAG_UPDATE_CURRENT);
+                        getIntent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        mBuilder.setContentIntent(pi);
+                        notificationManager.notify(1, mBuilder.build());
+                    }
+
+                    @Override
+                    public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                    }
+
+                    @Override
+                    public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+                    }
+
+                    @Override
+                    public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+
     }
 
 
