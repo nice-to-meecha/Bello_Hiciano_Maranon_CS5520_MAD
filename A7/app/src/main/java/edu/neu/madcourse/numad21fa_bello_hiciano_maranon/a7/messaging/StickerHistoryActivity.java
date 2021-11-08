@@ -116,9 +116,8 @@ public class StickerHistoryActivity extends AppCompatActivity {
                         int numMessages = (int) task.getResult().getChildrenCount();
                         for (int i = 1; i <= numMessages; i++) {
                             String messageNum = "Message " + i;
-                            // TODO - change child back to stickerLocation
                             String sentStickerLocation =
-                                    task.getResult().child(messageNum).child("stickerAlias")
+                                    task.getResult().child(messageNum).child("stickerLocation")
                                             .getValue().toString();
                             Log.v(TAG, "Collected location: " + sentStickerLocation);
                             hashMap.get(sentStickerLocation).incrementCount();
@@ -145,8 +144,8 @@ public class StickerHistoryActivity extends AppCompatActivity {
             totalStickerCount +=  addSticker.getCount();
         }
 
-        binding.totalStickers.setText(String.format(getResources().getString(R.string.total_stickers),
-                totalStickerCount));
+        binding.totalStickers.setText(String.format(getResources()
+                        .getString(R.string.total_stickers), totalStickerCount));
 
         createRecyclerView();
     }
@@ -165,6 +164,8 @@ public class StickerHistoryActivity extends AppCompatActivity {
 
         if (savedInstanceState.containsKey("totalStickerCount")) {
             totalStickerCount = savedInstanceState.getInt("totalStickerCount");
+            binding.totalStickers.setText(String.format(getResources()
+                            .getString(R.string.total_stickers), totalStickerCount));
         }
 
     }

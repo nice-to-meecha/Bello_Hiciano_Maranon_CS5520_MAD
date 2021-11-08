@@ -15,7 +15,7 @@ public class MessageSent implements Parcelable {
 
     public String sender;
     public String recipient;
-    public String stickerAlias;
+    public String stickerLocation;
     public int stickerID;
     public String timeSent;
 
@@ -45,7 +45,7 @@ public class MessageSent implements Parcelable {
     public MessageSent(Parcel in) {
         this.sender = in.readString();
         this.recipient = in.readString();
-        this.stickerAlias = in.readString();
+        this.stickerLocation = in.readString();
         this.stickerID = in.readInt();
         this.timeSent = in.readString();
     }
@@ -58,15 +58,15 @@ public class MessageSent implements Parcelable {
      *
      * @param sender - the username of the user who sent the message
      * @param recipient - the username of the recipient of the message
-     * @param stickerAlias - the alias of the sticker sent in the message
+     * @param stickerLocation - the file name of the sticker sent in the message
      * @param stickerID - the resource ID of the sticker sent in the message
      * @param timeSent - the time at which the message was sent
      */
-    public MessageSent(String sender, String recipient, String stickerAlias,
+    public MessageSent(String sender, String recipient, String stickerLocation,
                        int stickerID, String timeSent) {
         this.sender = sender;
         this.recipient = recipient;
-        this.stickerAlias = stickerAlias;
+        this.stickerLocation = stickerLocation;
         this.stickerID = stickerID;
         this.timeSent = timeSent;
     }
@@ -92,12 +92,12 @@ public class MessageSent implements Parcelable {
 
 
     /**
-     * Returns the alias of the sticker sent in the message
+     * Returns the file name of the sticker sent in the message
      *
-     * @return the alias of the sticker sent in the message
+     * @return the file name of the sticker sent in the message
      */
-    public String getStickerAlias() {
-        return this.stickerAlias;
+    public String getStickerLocation() {
+        return this.stickerLocation;
     }
 
 
@@ -144,7 +144,7 @@ public class MessageSent implements Parcelable {
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(this.sender);
         parcel.writeString(this.recipient);
-        parcel.writeString(this.stickerAlias);
+        parcel.writeString(this.stickerLocation);
         parcel.writeInt(this.stickerID);
         parcel.writeString(this.timeSent);
     }
@@ -161,7 +161,7 @@ public class MessageSent implements Parcelable {
         return "Message {" +
                 "sender: " + this.sender +
                 ", recipient: " + this.recipient +
-                ", stickerAlias: " + this.stickerAlias +
+                ", stickerLocation: " + this.stickerLocation +
                 ", stickerID: " + this.stickerID +
                 ", timeSent: " + timeSent +
                 '}';

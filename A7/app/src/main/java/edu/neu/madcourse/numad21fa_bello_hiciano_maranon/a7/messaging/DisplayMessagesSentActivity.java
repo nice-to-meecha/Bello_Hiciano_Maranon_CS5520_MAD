@@ -103,7 +103,7 @@ public class DisplayMessagesSentActivity extends AppCompatActivity {
                         for (DataSnapshot child: task.getResult().getChildren()) {
                             messageList.add(new MessageSent(child.child("sender").getValue().toString(),
                                     child.child("recipient").getValue().toString(),
-                                    child.child("stickerAlias").getValue().toString(),
+                                    child.child("stickerLocation").getValue().toString(),
                                     Integer.parseInt(child.child("stickerID").getValue().toString()),
                                     child.child("timeSent").getValue().toString()));
                         }
@@ -174,7 +174,7 @@ public class DisplayMessagesSentActivity extends AppCompatActivity {
             public void onItemClick(int position) {
                 // TODO - Open intent to show bigger version of message
                 Toast.makeText(DisplayMessagesSentActivity.this,
-                        messageList.get(position).getStickerAlias(),
+                        messageList.get(position).getStickerLocation(),
                         Toast.LENGTH_LONG).show();
             }
         };
