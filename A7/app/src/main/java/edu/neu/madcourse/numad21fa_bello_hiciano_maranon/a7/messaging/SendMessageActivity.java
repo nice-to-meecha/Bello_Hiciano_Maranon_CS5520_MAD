@@ -275,18 +275,24 @@ public class SendMessageActivity extends AppCompatActivity {
         JSONObject jPayload = new JSONObject();
         JSONObject jNotification = new JSONObject();
         JSONObject jData = new JSONObject();
+        String channelID = getResources().getString(R.string.channel_id);
 
         try {
             jNotification.put("title", "Sticker Alert!");
             jNotification.put("body", currUser.getUsername() +
                     " just sent you a sticker!");
+            jNotification.put("android_channel_id", channelID);
 
-            jData.put("sticker location", selectedSticker.getTransitionName());
+            jData.put("stickerLocation", selectedSticker.getTransitionName());
+            jData.put("currentUsername", currUser.getUsername());
+            jData.put("loginTime", currUser.getLoginTime());
+            jData.put("recipientUsername", recipientUsername);
 
             jPayload.put("priority", "high");
             jPayload.put("notification", jNotification);
             jPayload.put("data", jData);
             jPayload.put("to", recipientToken);
+            jPayload.put("android_channel_id", channelID);
 
             new Thread(new Runnable() {
                 @Override
@@ -324,7 +330,7 @@ public class SendMessageActivity extends AppCompatActivity {
             outputStream.close();
 
             storeMessage(recipientUsername,
-                    jPayload.getJSONObject("data").getString("sticker location"),
+                    jPayload.getJSONObject("data").getString("stickerLocation"),
                     selectedStickerResID);
 
             InputStream inputStream = conn.getInputStream();

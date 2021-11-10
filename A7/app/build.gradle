@@ -16,6 +16,15 @@ keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
 
+    signingConfigs {
+        release {
+            storeFile file(keystoreProperties['keystore'])
+            storePassword keystoreProperties['password']
+            keyPassword keystoreProperties['password']
+            keyAlias keystoreProperties['alias']
+        }
+    }
+
     buildFeatures {
         viewBinding = true
     }
@@ -70,4 +79,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging'
     // Firebase Realtime Database
     implementation 'com.google.firebase:firebase-database'
+
+    // Included to use NotificationCompatAPI, such that notifications
+    // are generated
+    implementation "androidx.core:core:1.7.0"
 }

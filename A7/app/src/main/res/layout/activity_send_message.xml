@@ -23,8 +23,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- TODO - update horizontalSpacing, verticalSpacing, columnWidth,-->
-        <!-- TODO - listSelector-->
         <GridView
             android:id="@+id/stickerGrid"
             android:layout_width="match_parent"
@@ -34,7 +32,7 @@
             android:layout_marginBottom="50dp"
             android:columnWidth="100dp"
             android:horizontalSpacing="10dp"
-            android:listSelector="@color/purple_200"
+            android:listSelector="#b3e5fc"
             android:nestedScrollingEnabled="true"
             android:numColumns="auto_fit"
             android:verticalSpacing="10dp"

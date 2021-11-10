@@ -9,6 +9,23 @@
         android:roundIcon="@mipmap/a7_home_icon_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.A7">
+
+        <!-- Default notification icon -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/a7_home_icon_foreground" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="@string/channel_id"/>
+
+        <service
+            android:name=".messaging.MessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <activity
             android:name=".messaging.StickerHistoryActivity"
             android:exported="true" />

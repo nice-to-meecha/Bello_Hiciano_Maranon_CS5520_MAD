@@ -7,7 +7,10 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
@@ -99,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
+
+        createNotificationChannel();
 
         database = FirebaseDatabase.getInstance();
 
@@ -371,8 +376,34 @@ public class MainActivity extends AppCompatActivity {
         signIn();
     }
 
+
+    /**
+     * Generates a notification channel, such that all notifications
+     * received from Firebase Cloud Messaging are delivered to the correct
+     * location
+     */
+    public void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            String channelID = getResources().getString(R.string.channel_id);
+            String channelName = getResources().getString(R.string.channel_name);
+            String channelDescription = getResources().getString(R.string.channel_description);
+            int notificationImportance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel notificationChannel =
+                    new NotificationChannel(channelID, channelName, notificationImportance);
+            notificationChannel.setDescription(channelDescription);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(notificationChannel);
+        }
+    }
+
+
+    /**
+     * Performs all actions necessary to end the lifecycle of the MainActivity
+     */
     @Override
     public void finish() {
+        // TODO - change logout, if establish persistent username
         logOut(binding.logoutButton);
         super.finish();
     }
