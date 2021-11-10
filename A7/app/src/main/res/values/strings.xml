@@ -22,9 +22,7 @@
     <string name="invalid_recipient">You must enter a valid recipient, who is signed in.</string>
 
     <!-- Message Cards -->
-    <string name="to">To:</string>
-    <string name="from">From:</string>
-    <string name="sender">Sender</string>
+    <string name="sender_recipient">%1$s sent %2$s</string>
 
     <!-- Message History -->
     <string name="sent_messages">Sent Messages</string>

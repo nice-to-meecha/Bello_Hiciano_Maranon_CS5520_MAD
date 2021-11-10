@@ -18,8 +18,9 @@ import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
  */
 public class MessageRViewHolder extends RecyclerView.ViewHolder {
 
-    public TextView messageSenderUsername;
-    public TextView messageRecipientUsername;
+    public View topDivider;
+    public TextView messageSenderRecipient;
+    public TextView messageTimeSent;
     public ImageView messageStickerSent;
 
     /**
@@ -34,8 +35,9 @@ public class MessageRViewHolder extends RecyclerView.ViewHolder {
      */
     public MessageRViewHolder(@NonNull View view, final ItemClickListener listener) {
         super(view);
-        this.messageSenderUsername = view.findViewById(R.id.messageSenderUsername);
-        this.messageRecipientUsername = view.findViewById(R.id.messageRecipientUsername);
+        this.topDivider = view.findViewById(R.id.topDivider);
+        this.messageSenderRecipient = view.findViewById(R.id.messageSenderRecipient);
+        this.messageTimeSent = view.findViewById(R.id.messageTimeSent);
         this.messageStickerSent = view.findViewById(R.id.messageStickerSent);
 
         view.setOnClickListener(new View.OnClickListener() {

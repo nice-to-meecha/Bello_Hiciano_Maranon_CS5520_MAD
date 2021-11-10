@@ -117,7 +117,7 @@ public class MessagingService extends FirebaseMessagingService {
                         .setAutoCancel(true)
                         .setContentIntent(openMessageHistory)
                         .setPriority(stickerMessage.getPriority())
-                        .setSmallIcon(R.drawable.a7_home_icon_foreground)
+                        .setSmallIcon(R.mipmap.a7_home_icon_round)
                         .setLargeIcon(stickerBitmap);
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);

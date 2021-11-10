@@ -281,7 +281,11 @@ public class SendMessageActivity extends AppCompatActivity {
             jNotification.put("title", "Sticker Alert!");
             jNotification.put("body", currUser.getUsername() +
                     " just sent you a sticker!");
-            jNotification.put("android_channel_id", channelID);
+            // Docs show to use 'android_channel_id', but only need
+            // to use 'channel_id' as tag
+            jNotification.put("channel_id", channelID);
+            // Opens the DisplayMessagesReceivedActivity, when clicked
+            jNotification.put("click_action", "DISPLAY_MESSAGES_RECEIVED");
 
             jData.put("stickerLocation", selectedSticker.getTransitionName());
             jData.put("currentUsername", currUser.getUsername());
@@ -292,7 +296,6 @@ public class SendMessageActivity extends AppCompatActivity {
             jPayload.put("notification", jNotification);
             jPayload.put("data", jData);
             jPayload.put("to", recipientToken);
-            jPayload.put("android_channel_id", channelID);
 
             new Thread(new Runnable() {
                 @Override

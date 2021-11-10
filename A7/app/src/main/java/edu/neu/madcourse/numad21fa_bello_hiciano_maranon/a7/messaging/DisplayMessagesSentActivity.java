@@ -107,6 +107,8 @@ public class DisplayMessagesSentActivity extends AppCompatActivity {
                                     Integer.parseInt(child.child("stickerID").getValue().toString()),
                                     child.child("timeSent").getValue().toString()));
                         }
+                        CompareMessage messageComparator = new CompareMessage();
+                        messageList.sort(messageComparator);
                         Log.v(TAG, messageList.toString());
 
                     } else {
@@ -165,8 +167,6 @@ public class DisplayMessagesSentActivity extends AppCompatActivity {
         layoutManager = new LinearLayoutManager(this);
         recyclerView = binding.sentMessagesRecyclerView;
         recyclerView.setHasFixedSize(true);
-        VerticalCardDecoration verticalItemDecoration = new VerticalCardDecoration(20);
-        recyclerView.addItemDecoration(verticalItemDecoration);
 
         recyclerViewAdapter = new SenderRecipientRViewAdapter(messageList);
         ItemClickListener listener = new ItemClickListener() {

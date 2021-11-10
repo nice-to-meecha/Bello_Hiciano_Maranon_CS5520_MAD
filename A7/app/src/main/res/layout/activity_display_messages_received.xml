@@ -18,6 +18,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <View
+        android:id="@+id/receivedMessagesTopDivider"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="@color/navy_blue"
+        app:layout_constraintBottom_toTopOf="@id/receivedMessagesRecyclerView"
+        app:layout_constraintEnd_toEndOf="@id/receivedMessagesRecyclerView"
+        app:layout_constraintStart_toStartOf="@id/receivedMessagesRecyclerView"
+        app:layout_constraintTop_toBottomOf="@id/receivedMessagesHeader"
+        app:layout_constraintVertical_bias="1.0" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/receivedMessagesRecyclerView"
         android:layout_width="0dp"
@@ -29,6 +40,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/receivedMessagesHeader" />
+        app:layout_constraintTop_toBottomOf="@id/receivedMessagesHeader" >
+    </androidx.recyclerview.widget.RecyclerView>
+
+    <View
+        android:id="@+id/receivedMessagesBottomDivider"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="@color/navy_blue"
+        app:layout_constraintTop_toBottomOf="@id/receivedMessagesRecyclerView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/receivedMessagesRecyclerView"
+        app:layout_constraintEnd_toEndOf="@id/receivedMessagesRecyclerView"
+        app:layout_constraintVertical_bias="0.0"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

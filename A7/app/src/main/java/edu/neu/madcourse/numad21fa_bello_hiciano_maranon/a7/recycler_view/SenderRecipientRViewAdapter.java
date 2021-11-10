@@ -4,8 +4,10 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -84,9 +86,12 @@ public class SenderRecipientRViewAdapter extends RecyclerView.Adapter<MessageRVi
     public void onBindViewHolder(@NonNull MessageRViewHolder holder, int position) {
         MessageSent currentMessage = this.messageList.get(position);
 
-        holder.messageSenderUsername.setText(currentMessage.getSender());
-        holder.messageRecipientUsername.setText(currentMessage.getRecipient());
+        holder.messageSenderRecipient.setText(String.format(
+                this.parent.getContext().getString(R.string.sender_recipient),
+                currentMessage.getSender(), currentMessage.getRecipient()));
+        holder.messageTimeSent.setText(currentMessage.getTimeSent());
         holder.messageStickerSent.setImageResource(currentMessage.getStickerID());
+
     }
 
 

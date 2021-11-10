@@ -13,10 +13,7 @@
         <!-- Default notification icon -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/a7_home_icon_foreground" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="@string/channel_id"/>
+            android:resource="@drawable/a7_home_icon_round" />
 
         <service
             android:name=".messaging.MessagingService"
@@ -31,7 +28,13 @@
             android:exported="true" />
         <activity
             android:name=".messaging.DisplayMessagesReceivedActivity"
-            android:exported="true" />
+            android:exported="true">
+            <intent-filter>
+                <action android:name="DISPLAY_MESSAGES_RECEIVED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".messaging.DisplayMessagesSentActivity"
             android:exported="true" />

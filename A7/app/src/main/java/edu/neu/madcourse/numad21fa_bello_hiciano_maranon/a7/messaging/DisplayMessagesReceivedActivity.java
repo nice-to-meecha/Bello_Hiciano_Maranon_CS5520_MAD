@@ -73,8 +73,14 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
     public void initializeMessageList() {
         Intent currUserIntent = getIntent();
 
-        currUser = new User(currUserIntent.getStringExtra("username"),
-                currUserIntent.getStringExtra("loginTime"));
+        if (currUserIntent.hasExtra("recipientUsername")) {
+            currUser = new User(currUserIntent.getStringExtra("recipientUsername"),
+                    currUserIntent.getStringExtra("loginTime"));
+
+        } else {
+            currUser = new User(currUserIntent.getStringExtra("username"),
+                    currUserIntent.getStringExtra("loginTime"));
+        }
 
         Log.v(TAG, currUser.toString());
 
@@ -107,6 +113,8 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
                                     Integer.parseInt(child.child("stickerID").getValue().toString()),
                                     child.child("timeSent").getValue().toString()));
                         }
+                        CompareMessage messageComparator = new CompareMessage();
+                        messageList.sort(messageComparator);
                         Log.v(TAG, messageList.toString());
 
                     } else {
@@ -165,8 +173,6 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
         layoutManager = new LinearLayoutManager(this);
         recyclerView = binding.receivedMessagesRecyclerView;
         recyclerView.setHasFixedSize(true);
-        VerticalCardDecoration verticalItemDecoration = new VerticalCardDecoration(20);
-        recyclerView.addItemDecoration(verticalItemDecoration);
 
         recyclerViewAdapter = new SenderRecipientRViewAdapter(messageList);
         ItemClickListener listener = new ItemClickListener() {
