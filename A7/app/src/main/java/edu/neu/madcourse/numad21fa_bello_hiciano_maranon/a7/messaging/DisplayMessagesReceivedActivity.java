@@ -276,10 +276,19 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
         ItemClickListener listener = new ItemClickListener() {
             @Override
             public void onItemClick(int position) {
-                // TODO - Open intent to show bigger version of message
-                Toast.makeText(DisplayMessagesReceivedActivity.this,
-                        messageList.get(position).getStickerLocation(),
-                        Toast.LENGTH_LONG).show();
+                MessageSent selectedMessage = messageList.get(position);
+                Intent openSelectedMessage = new Intent(getApplicationContext(),
+                        ShowSelectedMessageActivity.class);
+                openSelectedMessage.putExtra("sender",
+                        selectedMessage.getSender());
+                openSelectedMessage.putExtra("recipient",
+                        selectedMessage.getRecipient());
+                openSelectedMessage.putExtra("stickerLocation",
+                        selectedMessage.getStickerLocation());
+                openSelectedMessage.putExtra("timeSent",
+                        selectedMessage.getTimeSent());
+
+                startActivity(openSelectedMessage);
             }
         };
 
