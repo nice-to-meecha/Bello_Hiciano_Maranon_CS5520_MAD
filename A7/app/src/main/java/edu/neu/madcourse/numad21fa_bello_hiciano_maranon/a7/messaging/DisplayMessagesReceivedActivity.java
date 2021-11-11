@@ -1,6 +1,7 @@
 package edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -13,17 +14,17 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 
-import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding
         .ActivityDisplayMessagesReceivedBinding;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.ItemClickListener;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.SenderRecipientRViewAdapter;
-import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.VerticalCardDecoration;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
 
 public class DisplayMessagesReceivedActivity extends AppCompatActivity {
@@ -37,6 +38,7 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private SenderRecipientRViewAdapter recyclerViewAdapter;
     private RecyclerView.LayoutManager layoutManager;
+    private ChildEventListener messageListener;
 
 
     /**
@@ -84,12 +86,17 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
 
         Log.v(TAG, currUser.toString());
 
+        retrieveMessagesFromDatabase(currUser);
+
+        /*
         new Thread(new Runnable() {
             @Override
             public void run() {
                 retrieveMessagesFromDatabase(currUser);
             }
         }).start();
+
+         */
     }
 
 
@@ -132,6 +139,89 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
 
 
     /**
+     * Adds a listener to the current user's received messages,
+     * such that the RecyclerView retaining the received messages
+     * will be updated accordingly.
+     *
+     * @param user - the current user for whom received messages
+     *             are displayed
+     */
+    public void newMessageListener(User user) {
+        messageListener = database.getReference("ReceivedMessages").child(user.getUsername())
+                .addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot,
+                                     @Nullable String previousChildName) {
+                if (snapshot.getValue() == null) {
+                    Log.v(TAG, "Something went wrong when adding a message");
+                    return;
+                }
+
+                int prevMessageCount = 0;
+                Log.v(TAG, "previous child: " + previousChildName);
+
+                /* Getting number of previous children, such that won't add duplicates
+                 * (since onChildAdded() called for all existing children AND those
+                 * added afterward
+                 */
+                if (previousChildName != null) {
+                    String[] splitPrevMessageBySpaces = previousChildName.split("\\s");
+                    prevMessageCount = Integer.parseInt(
+                            splitPrevMessageBySpaces[splitPrevMessageBySpaces.length - 1]);
+                    Log.v(TAG, "Prev Message Count: " + prevMessageCount);
+                }
+
+                String[] splitCurrMessageBySpaces = snapshot.getKey().split("\\s");
+                int currMessageCount = Integer.parseInt(
+                        splitCurrMessageBySpaces[splitCurrMessageBySpaces.length - 1]);
+
+                if (prevMessageCount == messageList.size() &&
+                        currMessageCount == messageList.size() + 1) {
+                    Log.v(TAG, "Adding to message list");
+                    messageList.add(0, new MessageSent(
+                            snapshot.child("sender").getValue().toString(),
+                            snapshot.child("recipient").getValue().toString(),
+                            snapshot.child("stickerLocation").getValue().toString(),
+                            Integer.parseInt(snapshot.child("stickerID").getValue().toString()),
+                            snapshot.child("timeSent").getValue().toString()));
+
+                    recyclerViewAdapter.notifyItemInserted(0);
+                    recyclerView.getLayoutManager().scrollToPosition(0);
+
+                    /*
+                    synchronized (recyclerViewAdapter) {
+                        recyclerViewAdapter.notifyItemInserted(0);
+                    }
+
+                     */
+                }
+                Log.v(TAG, "new child: " + snapshot.getValue().toString());
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+
+    /**
      * Saves the current state of the DisplayReceivedMessagesActivity,
      * should it undergo an orientation or state change.
      *
@@ -144,6 +234,8 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
 
         outState.putParcelableArrayList("messageList", messageList);
+        outState.putString("username", currUser.getUsername());
+        outState.putString("loginTime", currUser.getLoginTime());
     }
 
 
@@ -160,6 +252,12 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
 
         if (savedInstanceState.containsKey("messageList")) {
             messageList = savedInstanceState.getParcelableArrayList("messageList");
+        }
+
+        if (savedInstanceState.containsKey("username") &&
+                savedInstanceState.containsKey("loginTime")) {
+            currUser = new User(savedInstanceState.getString("username"),
+                    savedInstanceState.getString("loginTime"));
         }
     }
 
@@ -188,5 +286,17 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
         recyclerViewAdapter.setOnClickListener(listener);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(recyclerViewAdapter);
+        newMessageListener(currUser);
+    }
+
+
+    /**
+     * Removes the new message child listener, such that multiple are
+     * not created, if resumed.
+     */
+    public void onPause() {
+        super.onPause();
+        database.getReference("ReceivedMessages").child(currUser.getUsername())
+                .removeEventListener(messageListener);
     }
 }
