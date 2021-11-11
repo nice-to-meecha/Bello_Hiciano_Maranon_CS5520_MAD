@@ -9,13 +9,20 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
@@ -37,9 +44,15 @@ import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
  * @author bello
  */
 public class MessagingService extends FirebaseMessagingService {
+
     private final String TAG = "MessagingService";
+    private final int SEND_MESSAGE_ACTIVITY_CODE = 102;
     private final int DISPLAY_MESSAGES_RECEIVED_ACTIVITY_CODE = 104;
+    private final int SHOW_SELECTED_MESSAGE_ACTIVITY_CODE = 106;
     private int notificationID = 1;
+    private FirebaseDatabase database;
+    private String[] tokenInfo;
+    private ArrayList<Sticker> stickerList;
 
 
     /**
@@ -78,23 +91,115 @@ public class MessagingService extends FirebaseMessagingService {
         if (remoteMessage.getData().size() > 0) {
             Map<String, String> data = remoteMessage.getData();
             if (data.containsKey("stickerLocation")) {
-                sendNotification(remoteMessage);
+                getToken(remoteMessage.getData().get("recipientUsername"),
+                        remoteMessage);
             }
         }
     }
 
 
+
+    public void getToken(String currUsername, RemoteMessage stickerMessage) {
+        database = FirebaseDatabase.getInstance();
+        database.getReference("Tokens").child(currUsername).get()
+                .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    tokenInfo = new String[2];
+                    tokenInfo[0] = task.getResult().child("token")
+                            .getValue().toString();
+                    tokenInfo[1] = task.getResult().child("registerTime")
+                            .getValue().toString();
+                    Log.v(TAG, "Current Token info: " + Arrays.toString(tokenInfo));
+
+                    generateStickers(stickerMessage);
+                }
+            }
+        });
+
+    }
+    /**
+     * Retrieves the aliases and locations of all Stickers
+     * that a particular user can access
+     *
+     * @param stickerMessage - the data retained within the message initially
+     *                       sent to the Firebase cloud, prior to receipt
+     */
+    public void generateStickers(RemoteMessage stickerMessage) {
+        stickerList = new ArrayList<>();
+
+        database.getReference("Stickers").get().addOnCompleteListener(
+                new OnCompleteListener<DataSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DataSnapshot> task) {
+                        if (task.isSuccessful()) {
+                            if (task.getResult() != null) {
+                                Log.v(TAG, "Making sticker list");
+                                for (DataSnapshot child: task.getResult().getChildren()) {
+                                    stickerList.add(new Sticker(child.getKey(),
+                                            child.getValue().toString()));
+                                }
+                                Log.v(TAG, "Stickers: " + stickerList.toString());
+                                sendNotification(stickerMessage);
+                            }
+                        }
+                    }
+                });
+    }
+
+    /**
+     * Generates a notification, such that users can view or respond to messages,
+     * if the Stick It To 'Em app is currently in the foreground
+     *
+     * @param stickerMessage - the data retained within the message initially
+     *                       sent to the Firebase cloud, prior to receipt
+     */
     public void sendNotification(RemoteMessage stickerMessage) {
         Log.v(TAG, "Creating notification: " + stickerMessage.getNotification());
         String channelID = getResources().getString(R.string.channel_id);
+
         Intent receivedMessagesIntent = new Intent(this, DisplayMessagesReceivedActivity.class);
         receivedMessagesIntent.putExtra("username", stickerMessage.getData().get("recipientUsername"));
         receivedMessagesIntent.putExtra("loginTime", stickerMessage.getData().get("loginTime"));
+
         PendingIntent openMessageHistory = PendingIntent.getActivity(this,
                 DISPLAY_MESSAGES_RECEIVED_ACTIVITY_CODE,
                 receivedMessagesIntent,
                 PendingIntent.FLAG_ONE_SHOT);
 
+        Intent viewMessage = new Intent(this, ShowSelectedMessageActivity.class);
+        viewMessage.putExtra("sender", stickerMessage.getData().get("currentUsername"));
+        viewMessage.putExtra("recipient", stickerMessage.getData().get("recipientUsername"));
+        viewMessage.putExtra("stickerLocation", stickerMessage.getData().get("stickerLocation"));
+        viewMessage.putExtra("timeSent", stickerMessage.getData().get("timeSent"));
+
+        PendingIntent pendingViewMessage = PendingIntent.getActivity(this,
+                SHOW_SELECTED_MESSAGE_ACTIVITY_CODE,
+                viewMessage,
+                PendingIntent.FLAG_ONE_SHOT);
+
+        Intent respondToMessage = new Intent(this, SendMessageActivity.class);
+        respondToMessage.putExtra("username", stickerMessage.getData().get("recipientUsername"));
+        respondToMessage.putExtra("loginTime", stickerMessage.getData().get("loginTime"));
+        respondToMessage.putExtra("recipient", stickerMessage.getData().get("currentUsername"));
+
+        try {
+            while (tokenInfo[0] == null || tokenInfo[1] == null) {
+                wait(1);
+            }
+        } catch (InterruptedException exception){
+            Log.v(TAG, Arrays.toString(exception.getStackTrace()));
+        }
+
+        respondToMessage.putExtra("token", tokenInfo[0]);
+        respondToMessage.putExtra("registerTime", tokenInfo[1]);
+        respondToMessage.putParcelableArrayListExtra("stickerList", stickerList);
+
+        PendingIntent pendingRespondToMessage = PendingIntent.getActivity(this,
+                SEND_MESSAGE_ACTIVITY_CODE,
+                respondToMessage,
+                PendingIntent.FLAG_ONE_SHOT);
 
         /*
          * I used the code from the top-voted response here
@@ -114,6 +219,9 @@ public class MessagingService extends FirebaseMessagingService {
                 new NotificationCompat.Builder(this, channelID)
                         .setContentTitle(stickerMessage.getNotification().getTitle())
                         .setContentText(stickerMessage.getNotification().getBody())
+                        .addAction(R.drawable.a7_home_icon_round, "VIEW", pendingViewMessage)
+                        .addAction(R.drawable.a7_home_icon_round, "REPLY",
+                                pendingRespondToMessage)
                         .setAutoCancel(true)
                         .setContentIntent(openMessageHistory)
                         .setPriority(stickerMessage.getPriority())

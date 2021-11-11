@@ -117,6 +117,11 @@ public class SendMessageActivity extends AppCompatActivity {
 
             stickerList = currUserAndTokenIntent.getParcelableArrayListExtra("stickerList");
 
+            if (currUserAndTokenIntent.hasExtra("recipient")) {
+                binding.enterRecipient.setText(
+                        currUserAndTokenIntent.getStringExtra("recipient"));
+            }
+
             selectedStickerResID = getResources().getIdentifier(stickerList.get(firstSticker)
                             .getLocation(), "drawable", getPackageName());
             selectedSticker.setImageResource(selectedStickerResID);
@@ -291,6 +296,9 @@ public class SendMessageActivity extends AppCompatActivity {
             jData.put("currentUsername", currUser.getUsername());
             jData.put("loginTime", currUser.getLoginTime());
             jData.put("recipientUsername", recipientUsername);
+            jData.put("timeSent",
+                    LocalDateTime.now().format(
+                            DateTimeFormatter.ofPattern("MM/dd/uuuu H:m:s:S")));
 
             jPayload.put("priority", "high");
             jPayload.put("notification", jNotification);
@@ -334,7 +342,8 @@ public class SendMessageActivity extends AppCompatActivity {
 
             storeMessage(recipientUsername,
                     jPayload.getJSONObject("data").getString("stickerLocation"),
-                    selectedStickerResID);
+                    selectedStickerResID,
+                    jPayload.getJSONObject("data").getString("timeSent"));
 
             InputStream inputStream = conn.getInputStream();
             logServerInput(inputStream);
@@ -354,14 +363,16 @@ public class SendMessageActivity extends AppCompatActivity {
      *                          attempting to send
      * @param stickerLocation - the file name of the sticker sent in the message
      * @param stickerID - the resource ID of the sticker image
+     * @param timeSent - the time at which the message was sent
      */
-    public void storeMessage(String recipientUsername, String stickerLocation, int stickerID) {
+    public void storeMessage(String recipientUsername, String stickerLocation,
+                             int stickerID, String timeSent) {
         int nextMessage = 1;
         MessageSent message = new MessageSent(currUser.getUsername(),
                 recipientUsername,
                 stickerLocation,
                 stickerID,
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/uuuu H:m:s:S")));
+                timeSent);
 
         database.getReference("SentMessages").child(currUser.getUsername()).get()
                 .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {

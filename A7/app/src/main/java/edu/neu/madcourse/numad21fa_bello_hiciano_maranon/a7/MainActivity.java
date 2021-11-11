@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private final int DISPLAY_MESSAGES_SENT_ACTIVITY_CODE = 103;
     private final int DISPLAY_MESSAGES_RECEIVED_ACTIVITY_CODE = 104;
     private final int STICKER_HISTORY_ACTIVITY_CODE = 105;
+    private final int SHOW_SELECTED_MESSAGE_ACTIVITY_CODE = 106;
 
     public FirebaseDatabase database;
     private ActivityMainBinding binding;
