@@ -280,6 +280,7 @@ public class SendMessageActivity extends AppCompatActivity {
             jNotification.put("channel_id", channelID);
             // Opens the DisplayMessagesReceivedActivity, when clicked
             jNotification.put("click_action", "DISPLAY_MESSAGES_RECEIVED");
+            jNotification.put("tag", "Updated Notification");
 
             jData.put("stickerLocation", selectedSticker.getTransitionName());
             jData.put("currentUsername", currUser.getUsername());

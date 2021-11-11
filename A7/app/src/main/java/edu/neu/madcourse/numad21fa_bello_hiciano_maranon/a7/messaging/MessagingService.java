@@ -1,12 +1,15 @@
 package edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.service.notification.NotificationListenerService;
+import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -22,7 +25,6 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
@@ -46,12 +48,11 @@ import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
 public class MessagingService extends FirebaseMessagingService {
 
     private final String TAG = "MessagingService";
-    private final int SEND_MESSAGE_ACTIVITY_CODE = 102;
-    private final int DISPLAY_MESSAGES_RECEIVED_ACTIVITY_CODE = 104;
-    private final int SHOW_SELECTED_MESSAGE_ACTIVITY_CODE = 106;
+    private int UNIQUE_INTENT_ID = 1;
     private int notificationID = 1;
     private FirebaseDatabase database;
     private ArrayList<Sticker> stickerList;
+    private int prevNotificationNum;
 
 
     /**
@@ -96,6 +97,39 @@ public class MessagingService extends FirebaseMessagingService {
     }
 
 
+    public int checkAllActiveNotifications() {
+        int noNotifications = 0, soleNotificationIndex = 0, possiblePrevMessageNum = 2;
+        NotificationManager manager = (NotificationManager)
+                getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (manager.getActiveNotifications().length == noNotifications) {
+            prevNotificationNum = noNotifications;
+
+        } else {
+            // Provides body (text) of most recent notification
+            String[] splitMessageBody = manager.getActiveNotifications()[soleNotificationIndex]
+                    .getNotification().extras.getCharSequence(Notification.EXTRA_TEXT)
+                    .toString().split("\\s");
+
+            String potentialNumberOfMessages =
+                    splitMessageBody[splitMessageBody.length - possiblePrevMessageNum];
+
+            if (potentialNumberOfMessages.matches("[0-9]+")) {
+                prevNotificationNum = Integer.parseInt(potentialNumberOfMessages);
+
+            } else {
+                prevNotificationNum = 1;
+            }
+
+            Log.v(TAG, manager.getActiveNotifications()[soleNotificationIndex]
+                    .getNotification().extras.getCharSequence(Notification.EXTRA_TEXT)
+                    .toString());
+        }
+
+        Log.v(TAG, "Number of Previous Notifications: " + prevNotificationNum);
+        return prevNotificationNum;
+    }
+
 
     /**
      * Retrieves the aliases and locations of all Stickers
@@ -136,14 +170,16 @@ public class MessagingService extends FirebaseMessagingService {
      */
     public void sendNotification(RemoteMessage stickerMessage) {
         Log.v(TAG, "Creating notification: " + stickerMessage.getNotification());
+        int prevNotificationNum = checkAllActiveNotifications();
         String channelID = getResources().getString(R.string.channel_id);
+        UNIQUE_INTENT_ID = (int) System.currentTimeMillis();
 
         Intent receivedMessagesIntent = new Intent(this, DisplayMessagesReceivedActivity.class);
         receivedMessagesIntent.putExtra("username", stickerMessage.getData().get("recipientUsername"));
         receivedMessagesIntent.putExtra("loginTime", stickerMessage.getData().get("loginTime"));
 
         PendingIntent openMessageHistory = PendingIntent.getActivity(this,
-                DISPLAY_MESSAGES_RECEIVED_ACTIVITY_CODE,
+                UNIQUE_INTENT_ID,
                 receivedMessagesIntent,
                 PendingIntent.FLAG_ONE_SHOT);
 
@@ -154,7 +190,7 @@ public class MessagingService extends FirebaseMessagingService {
         viewMessage.putExtra("timeSent", stickerMessage.getData().get("timeSent"));
 
         PendingIntent pendingViewMessage = PendingIntent.getActivity(this,
-                SHOW_SELECTED_MESSAGE_ACTIVITY_CODE,
+                UNIQUE_INTENT_ID,
                 viewMessage,
                 PendingIntent.FLAG_ONE_SHOT);
 
@@ -165,7 +201,7 @@ public class MessagingService extends FirebaseMessagingService {
         respondToMessage.putParcelableArrayListExtra("stickerList", stickerList);
 
         PendingIntent pendingRespondToMessage = PendingIntent.getActivity(this,
-                SEND_MESSAGE_ACTIVITY_CODE,
+                UNIQUE_INTENT_ID,
                 respondToMessage,
                 PendingIntent.FLAG_ONE_SHOT);
 
@@ -186,7 +222,6 @@ public class MessagingService extends FirebaseMessagingService {
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this, channelID)
                         .setContentTitle(stickerMessage.getNotification().getTitle())
-                        .setContentText(stickerMessage.getNotification().getBody())
                         .addAction(R.drawable.a7_home_icon_round, "VIEW", pendingViewMessage)
                         .addAction(R.drawable.a7_home_icon_round, "REPLY",
                                 pendingRespondToMessage)
@@ -195,6 +230,18 @@ public class MessagingService extends FirebaseMessagingService {
                         .setPriority(stickerMessage.getPriority())
                         .setSmallIcon(R.mipmap.a7_home_icon_round)
                         .setLargeIcon(stickerBitmap);
+
+        if (prevNotificationNum == 0) {
+            notificationBuilder.setContentText(stickerMessage.getNotification().getBody());
+
+        } else {
+            notificationBuilder.setContentText(
+                    String.format(getString(R.string.notification_body),
+                            prevNotificationNum + 1));
+            if (prevNotificationNum > 2) {
+                notificationBuilder.setSilent(true);
+            }
+        }
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         notificationManager.notify(notificationID, notificationBuilder.build());
