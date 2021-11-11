@@ -51,7 +51,6 @@ public class MessagingService extends FirebaseMessagingService {
     private final int SHOW_SELECTED_MESSAGE_ACTIVITY_CODE = 106;
     private int notificationID = 1;
     private FirebaseDatabase database;
-    private String[] tokenInfo;
     private ArrayList<Sticker> stickerList;
 
 
@@ -91,34 +90,13 @@ public class MessagingService extends FirebaseMessagingService {
         if (remoteMessage.getData().size() > 0) {
             Map<String, String> data = remoteMessage.getData();
             if (data.containsKey("stickerLocation")) {
-                getToken(remoteMessage.getData().get("recipientUsername"),
-                        remoteMessage);
+                generateStickers(remoteMessage);
             }
         }
     }
 
 
 
-    public void getToken(String currUsername, RemoteMessage stickerMessage) {
-        database = FirebaseDatabase.getInstance();
-        database.getReference("Tokens").child(currUsername).get()
-                .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DataSnapshot> task) {
-                if (task.isSuccessful() && task.getResult() != null) {
-                    tokenInfo = new String[2];
-                    tokenInfo[0] = task.getResult().child("token")
-                            .getValue().toString();
-                    tokenInfo[1] = task.getResult().child("registerTime")
-                            .getValue().toString();
-                    Log.v(TAG, "Current Token info: " + Arrays.toString(tokenInfo));
-
-                    generateStickers(stickerMessage);
-                }
-            }
-        });
-
-    }
     /**
      * Retrieves the aliases and locations of all Stickers
      * that a particular user can access
@@ -128,6 +106,7 @@ public class MessagingService extends FirebaseMessagingService {
      */
     public void generateStickers(RemoteMessage stickerMessage) {
         stickerList = new ArrayList<>();
+        database = FirebaseDatabase.getInstance();
 
         database.getReference("Stickers").get().addOnCompleteListener(
                 new OnCompleteListener<DataSnapshot>() {
@@ -183,17 +162,6 @@ public class MessagingService extends FirebaseMessagingService {
         respondToMessage.putExtra("username", stickerMessage.getData().get("recipientUsername"));
         respondToMessage.putExtra("loginTime", stickerMessage.getData().get("loginTime"));
         respondToMessage.putExtra("recipient", stickerMessage.getData().get("currentUsername"));
-
-        try {
-            while (tokenInfo[0] == null || tokenInfo[1] == null) {
-                wait(1);
-            }
-        } catch (InterruptedException exception){
-            Log.v(TAG, Arrays.toString(exception.getStackTrace()));
-        }
-
-        respondToMessage.putExtra("token", tokenInfo[0]);
-        respondToMessage.putExtra("registerTime", tokenInfo[1]);
         respondToMessage.putParcelableArrayListExtra("stickerList", stickerList);
 
         PendingIntent pendingRespondToMessage = PendingIntent.getActivity(this,

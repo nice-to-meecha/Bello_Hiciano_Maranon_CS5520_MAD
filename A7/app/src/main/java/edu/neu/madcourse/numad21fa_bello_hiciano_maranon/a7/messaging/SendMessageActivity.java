@@ -58,7 +58,6 @@ public class SendMessageActivity extends AppCompatActivity {
 
     private ActivitySendMessageBinding binding;
     private User currUser;
-    private Token fcmToken;
     private GridView stickerGrid;
     private ImageView selectedSticker;
     private int selectedStickerResID;
@@ -112,9 +111,6 @@ public class SendMessageActivity extends AppCompatActivity {
             currUser = new User(currUserAndTokenIntent.getStringExtra("username"),
                     currUserAndTokenIntent.getStringExtra("loginTime"));
 
-            fcmToken = new Token(currUserAndTokenIntent.getStringExtra("token"),
-                    currUserAndTokenIntent.getStringExtra("registerTime"));
-
             stickerList = currUserAndTokenIntent.getParcelableArrayListExtra("stickerList");
 
             if (currUserAndTokenIntent.hasExtra("recipient")) {
@@ -152,8 +148,6 @@ public class SendMessageActivity extends AppCompatActivity {
 
         outState.putString("username", currUser.getUsername());
         outState.putString("loginTime", currUser.getLoginTime());
-        outState.putString("token", fcmToken.getToken());
-        outState.putString("registerTime", fcmToken.getRegisterTime());
         outState.putString("selectedSticker", selectedSticker.getTransitionName());
         outState.putInt("selectedStickerResID", selectedStickerResID);
         outState.putParcelableArrayList("stickerList", stickerList);
@@ -179,12 +173,6 @@ public class SendMessageActivity extends AppCompatActivity {
                 savedInstanceState.containsKey("loginTime")) {
             currUser = new User(savedInstanceState.getString("username"),
                     savedInstanceState.getString("loginTime"));
-        }
-
-        if (savedInstanceState.containsKey("token") &&
-                savedInstanceState.containsKey("registerTime")) {
-            fcmToken = new Token(savedInstanceState.getString("token"),
-                    savedInstanceState.getString("registerTime"));
         }
 
         if (savedInstanceState.containsKey("selectedSticker") &&
@@ -242,7 +230,8 @@ public class SendMessageActivity extends AppCompatActivity {
     public void checkRecipient(View view) {
         String recipient = enterRecipient.getText().toString();
 
-        database.getReference("Tokens").child(recipient).child("token").get()
+        database.getReference("UserTokenLogin").child(recipient)
+                .child("token").child("token").get()
                 .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<DataSnapshot> task) {

@@ -78,8 +78,6 @@ public class MainActivity extends AppCompatActivity {
                                         LocalDateTime.now()
                                         .format(DateTimeFormatter
                                                 .ofPattern("MM/dd/uuuu H:m:s:S")));
-                                database.getReference("Users")
-                                        .child(currUser.getUsername()).setValue(currUser);
 
                                 pairToken(currUser);
                             }
@@ -108,14 +106,14 @@ public class MainActivity extends AppCompatActivity {
 
         database = FirebaseDatabase.getInstance();
 
-        initializeMainActivity(savedInstanceState);
+        if (savedInstanceState == null) {
+            generateToken(null);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                generateStickers();
-            }
-        }).start();
+        } else {
+            initializeMainActivity(savedInstanceState);
+        }
+
+        generateStickers();
     }
 
 
@@ -129,10 +127,6 @@ public class MainActivity extends AppCompatActivity {
      *                           of the MainActivity can be updated
      */
     private void initializeMainActivity(Bundle savedInstanceState) {
-        if (savedInstanceState == null) {
-            return;
-        }
-
         if (savedInstanceState.containsKey("username") &&
                 savedInstanceState.containsKey("loginTime")) {
             currUser = new User(savedInstanceState.getString("username"),
@@ -151,6 +145,30 @@ public class MainActivity extends AppCompatActivity {
                 stickerList.add((Sticker) parcel);
             }
         }
+    }
+
+
+    public void checkIfSignedIn() {
+        database.getReference("ExistingTokens").child(fcmToken.getToken())
+                .child("user").get()
+                .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    DataSnapshot data = task.getResult();
+                    if (data.hasChildren()) {
+                        currUser = new User(data.child("username").getValue().toString(),
+                                data.child("loginTime").getValue().toString());
+
+                    } else {
+                        signIn();
+                    }
+
+                } else {
+                    Log.v(TAG, "Something went wrong when checking login status.");
+                }
+            }
+        });
     }
 
 
@@ -193,9 +211,12 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
+        /*
         if (currUser == null) {
             signIn();
         }
+
+         */
     }
 
 
@@ -225,7 +246,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Log.v(TAG, "Pairing token");
-        database.getReference("Tokens").child(user.getUsername()).setValue(fcmToken);
+        database.getReference("UserTokenLogin")
+                .child(user.getUsername()).child("token").setValue(fcmToken);
+        database.getReference("UserTokenLogin")
+                .child(user.getUsername()).child("loginTime").setValue(user.getLoginTime());
+        database.getReference("ExistingTokens")
+                .child(fcmToken.getToken()).child("user").setValue(user);
     }
 
 
@@ -248,9 +274,14 @@ public class MainActivity extends AppCompatActivity {
                             LocalDateTime.now().format(DateTimeFormatter
                                     .ofPattern("MM/dd/uuuu H:m:s:S")));
                     Log.v(TAG, fcmToken.toString());
+                    addToExistingTokens(fcmToken);
 
                     if (user != null) {
                         pairToken(user);
+
+                    } else {
+                        checkIfSignedIn();
+
                     }
 
                 } else {
@@ -261,6 +292,20 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+
+    /**
+     * Adds new tokens to the ExistingTokens node of the database, if
+     * they did not already exist. If the tokens were already in existence,
+     * their registration time is simply updated.
+     *
+     * @param newToken - the token generated for a particular instance of the
+     *                 Stick It To 'Em app
+     */
+    public void addToExistingTokens(Token newToken) {
+        database.getReference("ExistingTokens").child(newToken.getToken())
+                .child("token").setValue(newToken);
     }
 
 
@@ -360,14 +405,26 @@ public class MainActivity extends AppCompatActivity {
      */
     public void logOut(View view) {
         // Removes user from Tokens node
-        database.getReference("Tokens").child(currUser.getUsername())
+        database.getReference("ExistingTokens").child(fcmToken.getToken()).child("user")
                 .removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if (!task.isSuccessful()) {
                     Toast.makeText(MainActivity.this, "Something went wrong",
                             Toast.LENGTH_LONG).show();
-                    Log.v(TAG, "Unable to remove user from Tokens node.");
+                    Log.v(TAG, "Unable to remove user from ExistingTokens node.");
+                }
+            }
+        });
+
+        database.getReference("UserTokenLogin").child(currUser.getUsername())
+                .removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (!task.isSuccessful()) {
+                    Toast.makeText(MainActivity.this, "Something went wrong",
+                            Toast.LENGTH_LONG).show();
+                    Log.v(TAG, "Unable to remove user stats from UserTokenLogin node.");
                 }
             }
         });
@@ -405,7 +462,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void finish() {
         // TODO - change logout, if establish persistent username
-        logOut(binding.logoutButton);
+        // logOut(binding.logoutButton);
         super.finish();
     }
 }
