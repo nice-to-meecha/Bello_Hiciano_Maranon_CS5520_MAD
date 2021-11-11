@@ -454,15 +454,4 @@ public class MainActivity extends AppCompatActivity {
             notificationManager.createNotificationChannel(notificationChannel);
         }
     }
-
-
-    /**
-     * Performs all actions necessary to end the lifecycle of the MainActivity
-     */
-    @Override
-    public void finish() {
-        // TODO - change logout, if establish persistent username
-        // logOut(binding.logoutButton);
-        super.finish();
-    }
 }

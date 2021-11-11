@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -16,8 +15,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.FirebaseDatabase;
@@ -37,8 +34,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.MainActivity;
-import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.Token;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.ActivitySendMessageBinding;
@@ -239,6 +234,7 @@ public class SendMessageActivity extends AppCompatActivity {
                             if (task.getResult().getValue() != null) {
                                 Log.v(TAG, task.getResult().getValue().toString());
                                 String recipientToken = task.getResult().getValue().toString();
+                                invalidRecipient.setVisibility(View.INVISIBLE);
                                 sendFCMMessage(recipient, recipientToken);
 
                             } else {
@@ -246,9 +242,7 @@ public class SendMessageActivity extends AppCompatActivity {
                             }
 
                         } else {
-                            Toast.makeText(SendMessageActivity.this,
-                                    "Something went wrong. Check your internet connection.",
-                                    Toast.LENGTH_LONG).show();
+                            invalidRecipient.setVisibility(View.VISIBLE);
                         }
                     }
                 });
