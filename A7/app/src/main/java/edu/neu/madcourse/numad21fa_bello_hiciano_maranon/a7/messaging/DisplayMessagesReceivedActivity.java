@@ -47,6 +47,7 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
     private SenderRecipientRViewAdapter recyclerViewAdapter;
     private RecyclerView.LayoutManager layoutManager;
     private ChildEventListener messageListener;
+    private boolean existingMessageListener = false;
 
 
     /**
@@ -147,6 +148,8 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
      *             are displayed
      */
     public void newMessageListener(User user) {
+        existingMessageListener = true;
+        Log.v(TAG, "Adding message listener");
         messageListener = database.getReference("ReceivedMessages").child(user.getUsername())
                 .addChildEventListener(new ChildEventListener() {
             @Override
@@ -158,7 +161,7 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
                 }
 
                 int prevMessageCount = 0;
-                Log.v(TAG, "previous child: " + previousChildName);
+                // Log.v(TAG, "previous child: " + previousChildName);
 
                 /* Getting number of previous children, such that won't add duplicates
                  * (since onChildAdded() called for all existing children AND those
@@ -168,7 +171,7 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
                     String[] splitPrevMessageBySpaces = previousChildName.split("\\s");
                     prevMessageCount = Integer.parseInt(
                             splitPrevMessageBySpaces[splitPrevMessageBySpaces.length - 1]);
-                    Log.v(TAG, "Prev Message Count: " + prevMessageCount);
+                    // Log.v(TAG, "Prev Message Count: " + prevMessageCount);
                 }
 
                 String[] splitCurrMessageBySpaces = snapshot.getKey().split("\\s");
@@ -177,7 +180,7 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
 
                 if (prevMessageCount == messageList.size() &&
                         currMessageCount == messageList.size() + 1) {
-                    Log.v(TAG, "Adding to message list");
+                    // Log.v(TAG, "Adding to message list");
                     messageList.add(0, new MessageSent(
                             snapshot.child("sender").getValue().toString(),
                             snapshot.child("recipient").getValue().toString(),
@@ -189,7 +192,7 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
                     recyclerView.getLayoutManager().scrollToPosition(0);
 
                 }
-                Log.v(TAG, "new child: " + snapshot.getValue().toString());
+                // Log.v(TAG, "new child: " + snapshot.getValue().toString());
             }
 
             @Override
@@ -289,7 +292,20 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
         recyclerViewAdapter.setOnClickListener(listener);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(recyclerViewAdapter);
+        if (!existingMessageListener) {
+            newMessageListener(currUser);
+        }
+    }
+
+
+    /**
+     * Adds a message listener, following an orientation or state change,
+     * such that received messages will be updated in real-time.
+     */
+    public void onRestart() {
+        Log.v(TAG, "onRestart");
         newMessageListener(currUser);
+        super.onRestart();
     }
 
 
@@ -297,9 +313,12 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
      * Removes the new message child listener, such that multiple are
      * not created, if resumed.
      */
-    public void onPause() {
-        super.onPause();
+    public void onStop() {
+        Log.v(TAG, "onStop");
+        Log.v(TAG, "Removing message listener");
         database.getReference("ReceivedMessages").child(currUser.getUsername())
                 .removeEventListener(messageListener);
+        existingMessageListener = false;
+        super.onStop();
     }
 }

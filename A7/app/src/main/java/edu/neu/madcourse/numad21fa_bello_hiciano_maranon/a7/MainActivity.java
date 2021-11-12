@@ -40,6 +40,7 @@ import java.util.Objects;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding
         .ActivityMainBinding;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.NavigationMenuHeaderBinding;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.CompareMessage;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.DisplayMessagesReceivedActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.DisplayMessagesSentActivity;
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
     public FirebaseDatabase database;
     private ActivityMainBinding binding;
+    private NavigationMenuHeaderBinding navMenuBinding;
     private User currUser;
     private Token fcmToken;
     private ArrayList<Sticker> stickerList;
@@ -124,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.v(TAG, "onCreate");
         super.onCreate(savedInstanceState);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
@@ -133,7 +136,14 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(binding.toolbar);
         ActionBarDrawerToggle toggle =
                 new ActionBarDrawerToggle(this, binding.mainDrawerLayout,
-                        binding.toolbar, R.string.open_nav_menu, R.string.closed_nav_menu);
+                        binding.toolbar, R.string.open_nav_menu, R.string.closed_nav_menu) {
+                    @Override
+                    public void onDrawerOpened(View view) {
+                        super.onDrawerOpened(view);
+                        TextView userPlaceholder = findViewById(R.id.userPlaceholder);
+                        userPlaceholder.setText(currUser.getUsername());
+                    }
+                };
         binding.mainDrawerLayout.addDrawerListener(toggle);
         toggle.syncState();
         binding.toolbar.setNavigationIcon(R.drawable.menu_icon_24dp);
@@ -154,7 +164,54 @@ public class MainActivity extends AppCompatActivity {
 
         } else {
             initializeMainActivity(savedInstanceState);
+
         }
+    }
+
+
+    @Override
+    public void onStart() {
+        Log.v(TAG, "onStart");
+        super.onStart();
+    }
+
+    @Override
+    public void onRestart() {
+        Log.v(TAG, "onRestart");
+        newMessageListener();
+        if (binding.mainDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            TextView userPlaceholder = findViewById(R.id.userPlaceholder);
+            userPlaceholder.setText(currUser.getUsername());
+        }
+        super.onRestart();
+    }
+
+
+    @Override
+    public void onResume() {
+        Log.v(TAG, "onResume");
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        Log.v(TAG, "onPause");
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        Log.v(TAG, "onStop");
+        Log.v(TAG, "Removing message listener");
+        database.getReference("ReceivedMessages").removeEventListener(messageListener);
+        existingMessageListener = false;
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.v(TAG, "onDestroy");
+        super.onDestroy();
     }
 
 
@@ -201,7 +258,18 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState.containsKey("communityFeed")) {
             communityFeed = savedInstanceState.getParcelableArrayList("communityFeed");
-            createRecyclerView();
+        }
+
+        if (savedInstanceState.containsKey("userMessageCountBundle")) {
+            Bundle userMessageCountBundle = savedInstanceState.getBundle("userMessageCountBundle");
+            for (String user: userMessageCountBundle.keySet()) {
+                userMessageCount.put(user, userMessageCountBundle.getInt(user));
+            }
+        }
+
+        if (savedInstanceState.containsKey("existingMessageListener")) {
+            existingMessageListener = savedInstanceState.getBoolean("existingMessageListener");
+            getCommunityFeed();
         }
     }
 
@@ -222,8 +290,6 @@ public class MainActivity extends AppCompatActivity {
                     if (data.hasChildren()) {
                         currUser = new User(data.child("username").getValue().toString(),
                                 data.child("loginTime").getValue().toString());
-                        TextView userPlaceholder = (TextView) findViewById(R.id.userPlaceholder);
-                        userPlaceholder.setText(currUser.getUsername());
 
                     } else {
                         signIn();
@@ -266,6 +332,16 @@ public class MainActivity extends AppCompatActivity {
         if (communityFeed != null) {
             outState.putParcelableArrayList("communityFeed", communityFeed);
         }
+
+        if (userMessageCount != null) {
+            Bundle userMessageCountBundle = new Bundle();
+            for (String user: userMessageCount.keySet()) {
+                userMessageCountBundle.putInt(user, userMessageCount.get(user));
+            }
+            outState.putBundle("userMessageCountBundle", userMessageCountBundle);
+        }
+
+        outState.putBoolean("existingMessageListener", existingMessageListener);
     }
 
 
@@ -301,8 +377,6 @@ public class MainActivity extends AppCompatActivity {
                 .child(user.getUsername()).child("loginTime").setValue(user.getLoginTime());
         database.getReference("ExistingTokens")
                 .child(fcmToken.getToken()).child("user").setValue(user);
-        TextView userPlaceholder = (TextView) findViewById(R.id.userPlaceholder);
-        userPlaceholder.setText(currUser.getUsername());
     }
 
 
@@ -572,6 +646,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public void getCommunityFeed() {
         communityFeed = new ArrayList<>();
+        userMessageCount = new HashMap<>();
         Log.v(TAG, "Getting community feed");
         database.getReference("ReceivedMessages").get().addOnCompleteListener(
                 new OnCompleteListener<DataSnapshot>() {
@@ -651,7 +726,9 @@ public class MainActivity extends AppCompatActivity {
         adapter.setOnClickListener(listener);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(adapter);
+
         if (!existingMessageListener) {
+            existingMessageListener = true;
             newMessageListener();
         }
     }
@@ -663,6 +740,7 @@ public class MainActivity extends AppCompatActivity {
      * updated accordingly.
      */
     public void newMessageListener() {
+        existingMessageListener = true;
         Log.v(TAG, "Adding message listener");
         database.getReference("ReceivedMessages").get().addOnCompleteListener(
                 new OnCompleteListener<DataSnapshot>() {
@@ -684,7 +762,7 @@ public class MainActivity extends AppCompatActivity {
 
                         if (userMessageCount.containsKey(snapshot.getKey())) {
                             Log.v(TAG, "Still considered child added, if starting " +
-                                    "with 0 messages.");
+                                    "with 0 messages. " + snapshot.getValue().toString());
                             return;
                         }
 
