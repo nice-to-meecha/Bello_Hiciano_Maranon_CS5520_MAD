@@ -20,6 +20,7 @@ import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.Activity
 public class SignInActivity extends AppCompatActivity {
     private final String TAG = "SignInActivity";
     private final int SIGN_IN_ACTIVITY_CODE = 101;
+    private final int EXIT_APP = 107;
 
     ActivitySignInBinding binding;
     EditText enterUsername;
@@ -103,5 +104,17 @@ public class SignInActivity extends AppCompatActivity {
             // Shows error message, if no username is provided
             invalidUsernameMessage.setVisibility(View.VISIBLE);
         }
+    }
+
+
+    /**
+     * Closes the app, if a user presses the back button from
+     * the SignInActivity (otherwise, app will crash)
+     */
+    @Override
+    public void onBackPressed() {
+        Intent closeApp = new Intent();
+        setResult(EXIT_APP, closeApp);
+        finish();
     }
 }

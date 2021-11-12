@@ -10,7 +10,7 @@
     <string name="channel_description">Notifies you when a user sends you a sticker</string>
 
     <!--Sign-In Activity-->
-    <string name="username_header">Username:</string>
+    <string name="username_header">Username</string>
     <string name="username_hint">Username</string>
     <string name="sign_in">Sign In</string>
     <string name="invalid_username">You must enter a username.</string>
@@ -37,4 +37,16 @@
 
     <!-- Message Service -->
     <string name="notification_body">You\'ve received %1$d stickers</string>
+
+    <!-- Navigation Menu -->
+    <string name="home">Home</string>
+    <string name="messaging">Messaging</string>
+    <string name="craft">Craft</string>
+    <string name="inbox">Inbox</string>
+    <string name="sent">Sent</string>
+    <string name="user">User</string>
+    <string name="a7_title">Stick It To \'Em</string>
+    <string name="open_nav_menu">Open Navigation Menu</string>
+    <string name="closed_nav_menu">Closed Navigation Menu</string>
+
 </resources>

@@ -5,34 +5,48 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Objects;
 
-import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.ActivityMainBinding;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding
+        .ActivityMainBinding;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.DisplayMessagesReceivedActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.DisplayMessagesSentActivity;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.MessageSent;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.SendMessageActivity;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.ShowSelectedMessageActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.Sticker;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.StickerHistoryActivity;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.ItemClickListener;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.SenderRecipientRViewAdapter;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.SignInActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.Token;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
@@ -51,12 +65,18 @@ public class MainActivity extends AppCompatActivity {
     private final int DISPLAY_MESSAGES_RECEIVED_ACTIVITY_CODE = 104;
     private final int STICKER_HISTORY_ACTIVITY_CODE = 105;
     private final int SHOW_SELECTED_MESSAGE_ACTIVITY_CODE = 106;
+    private final int EXIT_APP = 107;
 
     public FirebaseDatabase database;
     private ActivityMainBinding binding;
     private User currUser;
     private Token fcmToken;
     private ArrayList<Sticker> stickerList;
+    private ArrayList<MessageSent> communityFeed;
+    private RecyclerView recyclerView;
+    private SenderRecipientRViewAdapter adapter;
+    private RecyclerView.LayoutManager layoutManager;
+    private ChildEventListener messageListener;
 
 
     /*
@@ -82,6 +102,9 @@ public class MainActivity extends AppCompatActivity {
                                 pairToken(currUser);
                             }
                             break;
+                        case (EXIT_APP):
+                            finish();
+                            break;
                     }
                 }
             });
@@ -102,18 +125,46 @@ public class MainActivity extends AppCompatActivity {
         View view = binding.getRoot();
         setContentView(view);
 
+        setSupportActionBar(binding.toolbar);
+        ActionBarDrawerToggle toggle =
+                new ActionBarDrawerToggle(this, binding.mainDrawerLayout,
+                        binding.toolbar, R.string.open_nav_menu, R.string.closed_nav_menu);
+        binding.mainDrawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+        binding.toolbar.setNavigationIcon(R.drawable.menu_icon_24dp);
+        // Allows navigation menu items to be selected
+        binding.navigationMenu.bringToFront();
+        Objects.requireNonNull(getSupportActionBar()).setTitle("Community Feed");
+
+        addNavigationItemSelector();
+
         createNotificationChannel();
 
         database = FirebaseDatabase.getInstance();
 
         if (savedInstanceState == null) {
             generateToken(null);
+            generateStickers();
+            getCommunityFeed();
 
         } else {
             initializeMainActivity(savedInstanceState);
         }
+    }
 
-        generateStickers();
+
+    /**
+     * Prevents the app from closing, if the back button is pressed,
+     * while the navigation menu is open.
+     */
+    @Override
+    public void onBackPressed() {
+        if (binding.mainDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            binding.mainDrawerLayout.closeDrawer(GravityCompat.START);
+            return;
+        }
+
+        super.onBackPressed();
     }
 
 
@@ -140,10 +191,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (savedInstanceState.containsKey("stickerList")) {
-            stickerList = new ArrayList<>();
-            for (Parcelable parcel: savedInstanceState.getParcelableArrayList("stickerList")) {
-                stickerList.add((Sticker) parcel);
-            }
+            stickerList = savedInstanceState.getParcelableArrayList("stickerList");
+        }
+
+        if (savedInstanceState.containsKey("communityFeed")) {
+            communityFeed = savedInstanceState.getParcelableArrayList("communityFeed");
         }
     }
 
@@ -197,26 +249,10 @@ public class MainActivity extends AppCompatActivity {
         if (stickerList != null) {
             outState.putParcelableArrayList("stickerList", stickerList);
         }
-    }
 
-
-    /**
-     * Provides a state of the MainActivity, such that the user can
-     * interact with the app.
-     *
-     * Ensures that the current user is signed in to the app. If not,
-     * opens the SignInActivity.
-     */
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        /*
-        if (currUser == null) {
-            signIn();
+        if (communityFeed != null) {
+            outState.putParcelableArrayList("communityFeed", communityFeed);
         }
-
-         */
     }
 
 
@@ -312,8 +348,32 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Allows the current User to send a message to another registered user,
      * who is currently signed in to the app.
+     *
+     * @param view - the floating action button selected by users
+     *             to open the SendMessageActivity
      */
     public void openSendMessage(View view) {
+        if (currUser == null || fcmToken == null) {
+            return;
+        }
+
+        Intent openSendMessageActivity = new Intent(this,
+                SendMessageActivity.class);
+        openSendMessageActivity.putExtra("username", currUser.getUsername());
+        openSendMessageActivity.putExtra("loginTime", currUser.getLoginTime());
+        openSendMessageActivity.putExtra("token", fcmToken.getToken());
+        openSendMessageActivity.putExtra("registerTime", fcmToken.getRegisterTime());
+        openSendMessageActivity.putParcelableArrayListExtra("stickerList", stickerList);
+        activityResultLauncher.launch(openSendMessageActivity);
+    }
+
+
+    /**
+     * Allows the current User to send a message to another registered user,
+     * who is currently signed in to the app. Called, once the 'Craft'
+     * Navigation menu item is selected
+     */
+    public void openSendMessage() {
         if (currUser == null || fcmToken == null) {
             return;
         }
@@ -357,10 +417,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Allows the current user to view all messages sent, via the
      * DisplayMessagesSentActivity
-     *
-     * @param view - the button used to start DisplayMessagesSentActivity
      */
-    public void openSentMessageHistory(View view) {
+    public void openSentMessageHistory() {
         Intent openDisplayMessagesSent = new Intent(this,
                 DisplayMessagesSentActivity.class);
         openDisplayMessagesSent.putExtra("username", currUser.getUsername());
@@ -372,10 +430,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Allows the current user to view all messages received, via the
      * DisplayMessagesReceivedActivity
-     *
-     * @param view - the button used to start DisplayMessagesReceivedActivity
      */
-    public void openMessagesReceived(View view) {
+    public void openMessagesReceived() {
         Intent openDisplayMessagesReceived = new Intent(this,
                 DisplayMessagesReceivedActivity.class);
         openDisplayMessagesReceived.putExtra("username", currUser.getUsername());
@@ -387,10 +443,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Allows the current user to view all the number of each sticker
      * sent in messages
-     *
-     * @param view - the button used to start StickerHistoryActivity
      */
-    public void openStickerHistory(View view) {
+    public void openStickerHistory() {
         Intent openStickerHistory = new Intent(this, StickerHistoryActivity.class);
         openStickerHistory.putExtra("username", currUser.getUsername());
         openStickerHistory.putExtra("loginTime", currUser.getLoginTime());
@@ -400,10 +454,8 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Allows a user to logout from the app
-     * @param view - the button by which users will logout from the app,
-     *             via click
      */
-    public void logOut(View view) {
+    public void logOut() {
         // Removes user from Tokens node
         database.getReference("ExistingTokens").child(fcmToken.getToken()).child("user")
                 .removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -453,5 +505,197 @@ public class MainActivity extends AppCompatActivity {
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(notificationChannel);
         }
+    }
+
+
+    /**
+     * Initializes a listener for the items within the navigation
+     * menu, such that each item will elicit a response.
+     */
+    public void addNavigationItemSelector() {
+        binding.navigationMenu.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                Log.v(TAG, "Clicked icon: " + item.getTitle() + " " + item.toString());
+                switch (item.getItemId()) {
+                    case (R.id.home):
+                        Log.v(TAG, "Clicked home icon");
+                        onBackPressed();
+                        break;
+                    case (R.id.craft):
+                        Log.v(TAG, "Clicked craft icon");
+                        openSendMessage();
+                        break;
+                    case (R.id.inbox):
+                        Log.v(TAG, "Clicked inbox icon");
+                        openMessagesReceived();
+                        break;
+                    case (R.id.sent):
+                        Log.v(TAG, "Clicked sent icon");
+                        openSentMessageHistory();
+                        break;
+                    case (R.id.history):
+                        Log.v(TAG, "Clicked history icon");
+                        openStickerHistory();
+                        break;
+                    case (R.id.logout):
+                        Log.v(TAG, "Clicked logout icon");
+                        logOut();
+                        break;
+                }
+                return true;
+            }
+        });
+    }
+
+
+    public void getCommunityFeed() {
+        communityFeed = new ArrayList<>();
+        Log.v(TAG, "Getting community feed");
+        database.getReference("ReceivedMessages").get().addOnCompleteListener(
+                new OnCompleteListener<DataSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DataSnapshot> task) {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            Log.v(TAG, "ReceivedMessages task successful");
+                            DataSnapshot data = task.getResult();
+                            if (data.hasChildren()) {
+                                for (DataSnapshot child: data.getChildren()) {
+                                    Log.v(TAG, "user: " + child.getKey());
+                                    int numOfMessages = (int) child.getChildrenCount();
+                                    for (int i = 1; i <= numOfMessages; i++) {
+                                        communityFeed.add(new MessageSent(
+                                                child.child("Message " + i).child("sender")
+                                                        .getValue().toString(),
+                                                child.child("Message " + i).child("recipient")
+                                                        .getValue().toString(),
+                                                child.child("Message " + i).child("stickerLocation")
+                                                        .getValue().toString(),
+                                                Integer.parseInt(child.child("Message " + i)
+                                                        .child("stickerID").getValue().toString()),
+                                                child.child("Message " + i).child("timeSent")
+                                                        .getValue().toString()));
+                                    }
+                                }
+                                Log.v(TAG, "Community Messages: " + communityFeed);
+                            }
+                        }
+                        createRecyclerView();
+                    }
+                });
+    }
+
+
+    public void createRecyclerView() {
+        Log.v(TAG, "Creating recycler view");
+        layoutManager = new LinearLayoutManager(this);
+        recyclerView = binding.communityFeedRecyclerView;
+        recyclerView.setHasFixedSize(true);
+
+        adapter = new SenderRecipientRViewAdapter(communityFeed);
+        ItemClickListener listener = new ItemClickListener() {
+            @Override
+            public void onItemClick(int position) {
+                MessageSent selectedMessage = communityFeed.get(position);
+                Intent openSelectedMessage = new Intent(getApplicationContext(),
+                        ShowSelectedMessageActivity.class);
+                openSelectedMessage.putExtra("sender",
+                        selectedMessage.getSender());
+                openSelectedMessage.putExtra("recipient",
+                        selectedMessage.getRecipient());
+                openSelectedMessage.putExtra("stickerLocation",
+                        selectedMessage.getStickerLocation());
+                openSelectedMessage.putExtra("timeSent",
+                        selectedMessage.getTimeSent());
+
+                startActivity(openSelectedMessage);
+            }
+        };
+
+        adapter.setOnClickListener(listener);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(adapter);
+        // newMessageListener();
+    }
+
+
+    /**
+     * Adds a listener to all messages transmitted between users,
+     * such that the RecyclerView retaining said messages will be
+     * updated accordingly.
+     */
+    public void newMessageListener() {
+        messageListener = database.getReference("ReceivedMessages")
+                .addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(@NonNull DataSnapshot snapshot,
+                                             @Nullable String previousChildName) {
+                        if (snapshot.getValue() == null) {
+                            Log.v(TAG, "Something went wrong when adding a message");
+                            return;
+                        }
+
+                        int prevMessageCount = 0;
+                        Log.v(TAG, "previous child: " + previousChildName);
+
+                        /* Getting number of previous children, such that won't add duplicates
+                         * (since onChildAdded() called for all existing children AND those
+                         * added afterward
+                         */
+                        if (previousChildName != null) {
+                            String[] splitPrevMessageBySpaces = previousChildName.split("\\s");
+                            prevMessageCount = Integer.parseInt(
+                                    splitPrevMessageBySpaces[splitPrevMessageBySpaces.length - 1]);
+                            Log.v(TAG, "Prev Message Count: " + prevMessageCount);
+                        }
+
+                        String[] splitCurrMessageBySpaces = snapshot.getKey().split("\\s");
+                        int currMessageCount = Integer.parseInt(
+                                splitCurrMessageBySpaces[splitCurrMessageBySpaces.length - 1]);
+
+                        if (prevMessageCount == communityFeed.size() &&
+                                currMessageCount == communityFeed.size() + 1) {
+                            Log.v(TAG, "Adding to message list");
+                            communityFeed.add(0, new MessageSent(
+                                    snapshot.child("sender").getValue().toString(),
+                                    snapshot.child("recipient").getValue().toString(),
+                                    snapshot.child("stickerLocation").getValue().toString(),
+                                    Integer.parseInt(snapshot.child("stickerID").getValue().toString()),
+                                    snapshot.child("timeSent").getValue().toString()));
+
+                            adapter.notifyItemInserted(0);
+                            recyclerView.getLayoutManager().scrollToPosition(0);
+
+                    /*
+                    synchronized (recyclerViewAdapter) {
+                        recyclerViewAdapter.notifyItemInserted(0);
+                    }
+
+                     */
+                        }
+                        Log.v(TAG, "new child: " + snapshot.getValue().toString());
+                    }
+
+                    @Override
+                    public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                    }
+
+                    @Override
+                    public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+                    }
+
+                    @Override
+                    public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
     }
 }
