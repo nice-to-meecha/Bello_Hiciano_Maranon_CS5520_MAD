@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
@@ -82,6 +83,8 @@ public class SendMessageActivity extends AppCompatActivity {
         selectedSticker = binding.selectedSticker;
         enterRecipient = binding.enterRecipient;
         invalidRecipient = binding.invalidRecipientErrorMessage;
+
+        Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.craft_a_message);
 
         database = FirebaseDatabase.getInstance();
 

@@ -9,9 +9,7 @@
         android:roundIcon="@mipmap/a7_home_icon_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.A7">
-        <activity
-            android:name=".messaging.ShowSelectedMessageActivity"
-            android:exported="false" />
+
         <!-- Default notification icon -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
@@ -25,6 +23,10 @@
             </intent-filter>
         </service>
 
+        <activity
+            android:name=".messaging.ShowSelectedMessageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.DeleteActionBar" />
         <activity
             android:name=".messaging.StickerHistoryActivity"
             android:exported="true" />
@@ -49,7 +51,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.MainActivity">
+            android:theme="@style/Theme.DeleteActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

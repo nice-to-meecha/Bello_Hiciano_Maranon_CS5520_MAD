@@ -9,6 +9,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.util.Objects;
+
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding.ActivitySignInBinding;
 
@@ -41,6 +43,8 @@ public class SignInActivity extends AppCompatActivity {
         binding = ActivitySignInBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
+
+        Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.sign_in);
 
         enterUsername = binding.enterUsername;
         invalidUsernameMessage = binding.invalidUsernameMessage;

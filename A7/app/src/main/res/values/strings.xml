@@ -20,6 +20,7 @@
     <string name="recipient_hint">Recipient\'s username</string>
     <string name="send">Send</string>
     <string name="invalid_recipient">You must enter a valid recipient, who is signed in.</string>
+    <string name="craft_a_message">Craft a Message</string>
 
     <!-- Message Cards -->
     <string name="sender_recipient">%1$s sent %2$s</string>

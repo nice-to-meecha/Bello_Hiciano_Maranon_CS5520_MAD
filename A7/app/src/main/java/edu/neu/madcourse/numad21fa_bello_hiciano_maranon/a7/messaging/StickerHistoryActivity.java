@@ -57,6 +57,8 @@ public class StickerHistoryActivity extends AppCompatActivity {
         View view = binding.getRoot();
         setContentView(view);
 
+        Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.sticker_history);
+
         database = FirebaseDatabase.getInstance();
 
         if (savedInstanceState == null) {

@@ -6,53 +6,13 @@
     android:layout_height="match_parent"
     tools:context=".messaging.DisplayMessagesSentActivity">
 
-    <TextView
-        android:id="@+id/sentMessagesHeader"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/sent_messages"
-        android:textSize="40sp"
-        app:layout_constraintBottom_toTopOf="@id/sentMessagesRecyclerView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.05"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <View
-        android:id="@+id/sentMessagesTopDivider"
-        android:layout_width="0dp"
-        android:layout_height="2dp"
-        android:background="@color/navy_blue"
-        app:layout_constraintStart_toStartOf="@id/sentMessagesRecyclerView"
-        app:layout_constraintEnd_toEndOf="@id/sentMessagesRecyclerView"
-        app:layout_constraintTop_toBottomOf="@id/sentMessagesHeader"
-        app:layout_constraintBottom_toTopOf="@id/sentMessagesRecyclerView"
-        app:layout_constraintVertical_bias="1.0"/>
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/sentMessagesRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/sentMessagesHeader" >
-
-    </androidx.recyclerview.widget.RecyclerView>
-
-    <View
-        android:id="@+id/sentMessagesBottomDivider"
-        android:layout_width="0dp"
-        android:layout_height="2dp"
-        android:background="@color/navy_blue"
-        app:layout_constraintStart_toStartOf="@id/sentMessagesRecyclerView"
-        app:layout_constraintEnd_toEndOf="@id/sentMessagesRecyclerView"
-        app:layout_constraintTop_toBottomOf="@id/sentMessagesRecyclerView"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintVertical_bias="0.0"/>
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

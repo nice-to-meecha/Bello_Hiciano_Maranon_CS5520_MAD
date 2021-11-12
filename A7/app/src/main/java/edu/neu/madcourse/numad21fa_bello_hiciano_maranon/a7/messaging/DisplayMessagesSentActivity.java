@@ -17,6 +17,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding
@@ -53,6 +54,8 @@ public class DisplayMessagesSentActivity extends AppCompatActivity {
         binding = ActivityDisplayMessagesSentBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
+
+        Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.sent_messages);
 
         database = FirebaseDatabase.getInstance();
 

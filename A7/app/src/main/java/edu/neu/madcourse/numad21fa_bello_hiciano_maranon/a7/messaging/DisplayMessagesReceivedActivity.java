@@ -20,7 +20,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding
         .ActivityDisplayMessagesReceivedBinding;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.ItemClickListener;
@@ -55,6 +57,8 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
         binding = ActivityDisplayMessagesReceivedBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
+
+        Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.inbox);
 
         database = FirebaseDatabase.getInstance();
 

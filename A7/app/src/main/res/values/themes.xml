@@ -22,7 +22,7 @@
     </style>
 
 
-    <style name="Theme.MainActivity" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.DeleteActionBar" parent="Theme.MaterialComponents.DayNight.NoActionBar">
 
         <!-- Primary brand color. -->
         <!-- colorPrimary previously @color/purple_500 -->
