@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -23,12 +22,16 @@ import java.util.Objects;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding
         .ActivityStickerHistoryBinding;
-import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.ItemClickListener;
-import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.SenderRecipientRViewAdapter;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.StickerCountRViewAdapter;
-import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.VerticalCardDecoration;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
 
+
+/**
+ * Class providing for the Sticker History page, allowing
+ * users to visualize their current sticker usage.
+ *
+ * @author bello
+ */
 public class StickerHistoryActivity extends AppCompatActivity {
     private String TAG = "StickerHistoryActivity";
 
@@ -78,6 +81,9 @@ public class StickerHistoryActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Determines the current user, via Intent
+     */
     public void initializeCurrentUser() {
         Log.v(TAG, "Getting current user");
         Intent getCurrUser = getIntent();
@@ -86,6 +92,11 @@ public class StickerHistoryActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Creates a map, storing all available Sticker aliases and
+     * their file names. Will be used to count the number of each
+     * individual sticker utilized by the current user.
+     */
     public void initializeStickerMap() {
         Log.v(TAG, "making sticker map");
         database.getReference("Stickers").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
@@ -107,6 +118,13 @@ public class StickerHistoryActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Counts the number of times each individual sticker has been
+     * sent by the current user.
+     *
+     * @param user - the user for which individual sticker usage
+     *             will be assessed
+     */
     public void countStickerUsage(@NonNull User user) {
         database.getReference("SentMessages").child(user.getUsername()).get()
                 .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
@@ -136,6 +154,12 @@ public class StickerHistoryActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Counts the total number of stickers utilized by the current
+     * user. Also adds all stickers transmitted from the MainActivity
+     * or MessagingService to the sticker list, with which the
+     * RecyclerView will be generated.
+     */
     public void createStickerList() {
         Log.v(TAG, "Creating sticker list" + hashMap.toString());
         for (String key: hashMap.keySet()) {
@@ -153,6 +177,13 @@ public class StickerHistoryActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Sets up the StickerHistoryActivity with all information
+     * present in the activity, prior to a state or orientation change.
+     *
+     * @param savedInstanceState - the bundle from which relevant user
+     *                           and sticker information will be collected
+     */
     public void initializeStickerHistoryActivity(Bundle savedInstanceState) {
         if (savedInstanceState.containsKey("username") &&
                 savedInstanceState.containsKey("loginTime")) {
@@ -172,6 +203,14 @@ public class StickerHistoryActivity extends AppCompatActivity {
 
     }
 
+
+    /**
+     * Saves the current user's information, as well as the list
+     * of stickers displayed, prior to a state or orientation change.
+     *
+     * @param outState - the bundle within which user and sticker
+     *                 information will be stored
+     */
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -183,20 +222,18 @@ public class StickerHistoryActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Creates a RecyclerView, which displays the number of times
+     * the current user has sent each sticker.
+     */
     public void createRecyclerView() {
         Log.v(TAG, "Creating recycler view");
         layoutManager = new LinearLayoutManager(this);
         recyclerView = binding.stickerHistoryRecyclerView;
         recyclerView.setHasFixedSize(true);
 
-        // VerticalCardDecoration verticalItemDecoration = new VerticalCardDecoration(20);
-        // recyclerView.addItemDecoration(verticalItemDecoration);
-
         recyclerViewAdapter = new StickerCountRViewAdapter(stickerList);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(recyclerViewAdapter);
     }
-
-    // TODO - show total sticker usage at top and then include # of
-    // TODO - stickers used (per sticker), next to corresponding stickers
 }

@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -24,9 +23,15 @@ import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding
         .ActivityDisplayMessagesSentBinding;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.ItemClickListener;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.SenderRecipientRViewAdapter;
-import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.VerticalCardDecoration;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
 
+
+/**
+ * Class which creates an Activity that displays all messages sent
+ * by the current user (to other users).
+ *
+ * @author bello
+ */
 public class DisplayMessagesSentActivity extends AppCompatActivity {
     private final String TAG = "DisplayMessagesSentActivity";
     private final int DISPLAY_MESSAGES_SENT_ACTIVITY_CODE = 103;

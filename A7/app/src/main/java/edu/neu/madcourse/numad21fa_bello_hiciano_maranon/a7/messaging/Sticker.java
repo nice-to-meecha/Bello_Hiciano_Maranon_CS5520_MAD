@@ -7,7 +7,6 @@ import androidx.annotation.NonNull;
 
 import java.util.Objects;
 
-import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.R;
 
 /**
  * Class representing the stickers that users are able to send

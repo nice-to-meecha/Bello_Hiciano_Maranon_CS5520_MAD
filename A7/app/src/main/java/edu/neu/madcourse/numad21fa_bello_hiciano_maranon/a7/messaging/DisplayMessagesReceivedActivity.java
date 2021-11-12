@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -29,6 +28,13 @@ import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.ItemCl
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.recycler_view.SenderRecipientRViewAdapter;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.sign_in.User;
 
+
+/**
+ * Class which creates an Activity that displays all messages received
+ * by the current user (from other users).
+ *
+ * @author bello
+ */
 public class DisplayMessagesReceivedActivity extends AppCompatActivity {
     private final String TAG = "DisplayMessagesReceivedActivity";
     private final int DISPLAY_MESSAGES_RECEIVED_ACTIVITY_CODE = 104;

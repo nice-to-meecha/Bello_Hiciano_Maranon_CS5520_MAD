@@ -81,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView.LayoutManager layoutManager;
     private ChildEventListener messageListener;
     private HashMap<String, Integer> userMessageCount = new HashMap<>();
+    private boolean existingMessageListener = false;
 
 
     /*
@@ -205,6 +206,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Checks the username associated with the existing token,
+     * to establish whether if a user is signed into that
+     * particular instance of the app.
+     */
     public void checkIfSignedIn() {
         database.getReference("ExistingTokens").child(fcmToken.getToken())
                 .child("user").get()
@@ -559,6 +565,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Retrieves all messages sent between users of the
+     * Stick It To 'Em app. These will later be displayed
+     * via RecyclerView.
+     */
     public void getCommunityFeed() {
         communityFeed = new ArrayList<>();
         Log.v(TAG, "Getting community feed");
@@ -607,6 +618,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Creates a RecyclerView, which will display all messages
+     * transmitted between users
+     */
     public void createRecyclerView() {
         Log.v(TAG, "Creating recycler view");
         layoutManager = new LinearLayoutManager(this);
@@ -636,7 +651,9 @@ public class MainActivity extends AppCompatActivity {
         adapter.setOnClickListener(listener);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(adapter);
-        newMessageListener();
+        if (!existingMessageListener) {
+            newMessageListener();
+        }
     }
 
 
@@ -646,6 +663,15 @@ public class MainActivity extends AppCompatActivity {
      * updated accordingly.
      */
     public void newMessageListener() {
+        Log.v(TAG, "Adding message listener");
+        database.getReference("ReceivedMessages").get().addOnCompleteListener(
+                new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                Log.v(TAG, "Ensuring ReceivedMessages node is created");
+            }
+        });
+
         messageListener = database.getReference("ReceivedMessages")
                 .addChildEventListener(new ChildEventListener() {
                     @Override
@@ -656,41 +682,34 @@ public class MainActivity extends AppCompatActivity {
                             return;
                         }
 
-                        /*
-                        int prevMessageCount = 0;
-                        Log.v(TAG, "previous child: " + previousChildName);
-
-                        /* Getting number of previous children, such that won't add duplicates
-                         * (since onChildAdded() called for all existing children AND those
-                         * added afterward
-                         *
-                        if (previousChildName != null) {
-                            String[] splitPrevMessageBySpaces = previousChildName.split("\\s");
-                            prevMessageCount = Integer.parseInt(
-                                    splitPrevMessageBySpaces[splitPrevMessageBySpaces.length - 1]);
-                            Log.v(TAG, "Prev Message Count: " + prevMessageCount);
+                        if (userMessageCount.containsKey(snapshot.getKey())) {
+                            Log.v(TAG, "Still considered child added, if starting " +
+                                    "with 0 messages.");
+                            return;
                         }
 
-                        String[] splitCurrMessageBySpaces = snapshot.getKey().split("\\s");
-                        int currMessageCount = Integer.parseInt(
-                                splitCurrMessageBySpaces[splitCurrMessageBySpaces.length - 1]);
+                        userMessageCount.put(snapshot.getKey(), 1);
 
-                        if (prevMessageCount == communityFeed.size() &&
-                                currMessageCount == communityFeed.size() + 1) {
-                            Log.v(TAG, "Adding to message list");
-                            communityFeed.add(0, new MessageSent(
-                                    snapshot.child("sender").getValue().toString(),
-                                    snapshot.child("recipient").getValue().toString(),
-                                    snapshot.child("stickerLocation").getValue().toString(),
-                                    Integer.parseInt(snapshot.child("stickerID").getValue().toString()),
-                                    snapshot.child("timeSent").getValue().toString()));
+                        Log.v(TAG, "Child added: " + snapshot.toString());
 
-                            adapter.notifyItemInserted(0);
-                            recyclerView.getLayoutManager().scrollToPosition(0);
+                        Log.v(TAG, "Adding message 1");
 
-                        }
-                        Log.v(TAG, "new child: " + snapshot.getValue().toString());
-                        */
+                        String messageNumber = "Message 1";
+                        communityFeed.add(0, new MessageSent(
+                                snapshot.child(messageNumber).child("sender")
+                                        .getValue().toString(),
+                                snapshot.child(messageNumber).child("recipient")
+                                        .getValue().toString(),
+                                snapshot.child(messageNumber).child("stickerLocation")
+                                        .getValue().toString(),
+                                Integer.parseInt(snapshot.child(messageNumber)
+                                        .child("stickerID").getValue().toString()),
+                                snapshot.child(messageNumber).child("timeSent")
+                                        .getValue().toString()
+                        ));
+
+                        adapter.notifyItemInserted(0);
+                        recyclerView.getLayoutManager().scrollToPosition(0);
                     }
 
                     @Override
@@ -738,15 +757,5 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
-    }
-
-
-    /**
-     * Removes the new message child listener, such that multiple are
-     * not created, if resumed.
-     */
-    public void onPause() {
-        super.onPause();
-        database.getReference("ReceivedMessages").removeEventListener(messageListener);
     }
 }

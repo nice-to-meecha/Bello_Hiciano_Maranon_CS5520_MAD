@@ -8,8 +8,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
-import android.service.notification.NotificationListenerService;
-import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -97,6 +95,15 @@ public class MessagingService extends FirebaseMessagingService {
     }
 
 
+    /**
+     * Returns the number of active notifications that can be
+     * found in the Stick It To 'Em app's channel (only for
+     * notifications generated in the foreground).
+     *
+     * @return the number of active notifications within the Stick
+     * It To 'Em app's channel (only for notifications generated
+     * in the foreground)
+     */
     public int checkAllActiveNotifications() {
         int noNotifications = 0, soleNotificationIndex = 0, possiblePrevMessageNum = 2;
         NotificationManager manager = (NotificationManager)
@@ -257,8 +264,12 @@ public class MessagingService extends FirebaseMessagingService {
      *
      * It is used to produce a bitmap from a drawable, such that a
      * sticker can be used as a large icon in a notification.
-     * @param stickerID
-     * @return
+     *
+     * @param stickerID - the resource ID of the sticker to be
+     *                  drawn in a notification
+     *
+     * @return a bitmap, as produced from the resource ID of
+     * a vector asset
      */
     public Bitmap convertDrawableToBitmap(int stickerID) {
         Drawable drawable = ContextCompat.getDrawable(getApplicationContext(),
