@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -34,10 +35,12 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.databinding
         .ActivityMainBinding;
+import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.CompareMessage;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.DisplayMessagesReceivedActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.DisplayMessagesSentActivity;
 import edu.neu.madcourse.numad21fa_bello_hiciano_maranon.a7.messaging.MessageSent;
@@ -77,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
     private SenderRecipientRViewAdapter adapter;
     private RecyclerView.LayoutManager layoutManager;
     private ChildEventListener messageListener;
+    private HashMap<String, Integer> userMessageCount = new HashMap<>();
 
 
     /*
@@ -196,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState.containsKey("communityFeed")) {
             communityFeed = savedInstanceState.getParcelableArrayList("communityFeed");
+            createRecyclerView();
         }
     }
 
@@ -211,6 +216,8 @@ public class MainActivity extends AppCompatActivity {
                     if (data.hasChildren()) {
                         currUser = new User(data.child("username").getValue().toString(),
                                 data.child("loginTime").getValue().toString());
+                        TextView userPlaceholder = (TextView) findViewById(R.id.userPlaceholder);
+                        userPlaceholder.setText(currUser.getUsername());
 
                     } else {
                         signIn();
@@ -288,6 +295,8 @@ public class MainActivity extends AppCompatActivity {
                 .child(user.getUsername()).child("loginTime").setValue(user.getLoginTime());
         database.getReference("ExistingTokens")
                 .child(fcmToken.getToken()).child("user").setValue(user);
+        TextView userPlaceholder = (TextView) findViewById(R.id.userPlaceholder);
+        userPlaceholder.setText(currUser.getUsername());
     }
 
 
@@ -563,6 +572,7 @@ public class MainActivity extends AppCompatActivity {
                             if (data.hasChildren()) {
                                 for (DataSnapshot child: data.getChildren()) {
                                     Log.v(TAG, "user: " + child.getKey());
+                                    userMessageCount.put(child.getKey(), 0);
                                     int numOfMessages = (int) child.getChildrenCount();
                                     for (int i = 1; i <= numOfMessages; i++) {
                                         communityFeed.add(new MessageSent(
@@ -576,10 +586,20 @@ public class MainActivity extends AppCompatActivity {
                                                         .child("stickerID").getValue().toString()),
                                                 child.child("Message " + i).child("timeSent")
                                                         .getValue().toString()));
+                                        userMessageCount.replace(child.getKey(),
+                                                userMessageCount.get(child.getKey()) + 1);
+                                        Log.v(TAG, "Updated hashmap: " + userMessageCount);
                                     }
                                 }
+
+                                CompareMessage messageComparator = new CompareMessage();
+                                communityFeed.sort(messageComparator);
                                 Log.v(TAG, "Community Messages: " + communityFeed);
+                            } else {
+                                Log.v(TAG, "Data has no children");
                             }
+                        } else {
+                            Log.v(TAG, "Task result is null");
                         }
                         createRecyclerView();
                     }
@@ -616,7 +636,7 @@ public class MainActivity extends AppCompatActivity {
         adapter.setOnClickListener(listener);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(adapter);
-        // newMessageListener();
+        newMessageListener();
     }
 
 
@@ -636,13 +656,14 @@ public class MainActivity extends AppCompatActivity {
                             return;
                         }
 
+                        /*
                         int prevMessageCount = 0;
                         Log.v(TAG, "previous child: " + previousChildName);
 
                         /* Getting number of previous children, such that won't add duplicates
                          * (since onChildAdded() called for all existing children AND those
                          * added afterward
-                         */
+                         *
                         if (previousChildName != null) {
                             String[] splitPrevMessageBySpaces = previousChildName.split("\\s");
                             prevMessageCount = Integer.parseInt(
@@ -667,18 +688,38 @@ public class MainActivity extends AppCompatActivity {
                             adapter.notifyItemInserted(0);
                             recyclerView.getLayoutManager().scrollToPosition(0);
 
-                    /*
-                    synchronized (recyclerViewAdapter) {
-                        recyclerViewAdapter.notifyItemInserted(0);
-                    }
-
-                     */
                         }
                         Log.v(TAG, "new child: " + snapshot.getValue().toString());
+                        */
                     }
 
                     @Override
                     public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                        Log.v(TAG, "Child changed: " + snapshot.toString());
+
+                        int numOfMessages = (int) snapshot.getChildrenCount();
+                        Log.v(TAG, "Adding message " + numOfMessages);
+
+                        String messageNumber = "Message " + numOfMessages;
+                        communityFeed.add(0, new MessageSent(
+                                snapshot.child(messageNumber).child("sender")
+                                        .getValue().toString(),
+                                snapshot.child(messageNumber).child("recipient")
+                                        .getValue().toString(),
+                                snapshot.child(messageNumber).child("stickerLocation")
+                                        .getValue().toString(),
+                                Integer.parseInt(snapshot.child(messageNumber)
+                                        .child("stickerID").getValue().toString()),
+                                snapshot.child(messageNumber).child("timeSent")
+                                        .getValue().toString()
+                        ));
+
+                        userMessageCount.replace(snapshot.getKey(),
+                                userMessageCount.get(snapshot.getKey()) + 1);
+                        Log.v(TAG, "Updated hashmap: " + userMessageCount);
+
+                        adapter.notifyItemInserted(0);
+                        recyclerView.getLayoutManager().scrollToPosition(0);
 
                     }
 
@@ -697,5 +738,15 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
+    }
+
+
+    /**
+     * Removes the new message child listener, such that multiple are
+     * not created, if resumed.
+     */
+    public void onPause() {
+        super.onPause();
+        database.getReference("ReceivedMessages").removeEventListener(messageListener);
     }
 }

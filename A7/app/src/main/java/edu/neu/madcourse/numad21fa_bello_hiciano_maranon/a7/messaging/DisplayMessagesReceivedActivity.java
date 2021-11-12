@@ -91,16 +91,6 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
         Log.v(TAG, currUser.toString());
 
         retrieveMessagesFromDatabase(currUser);
-
-        /*
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                retrieveMessagesFromDatabase(currUser);
-            }
-        }).start();
-
-         */
     }
 
 
@@ -192,12 +182,6 @@ public class DisplayMessagesReceivedActivity extends AppCompatActivity {
                     recyclerViewAdapter.notifyItemInserted(0);
                     recyclerView.getLayoutManager().scrollToPosition(0);
 
-                    /*
-                    synchronized (recyclerViewAdapter) {
-                        recyclerViewAdapter.notifyItemInserted(0);
-                    }
-
-                     */
                 }
                 Log.v(TAG, "new child: " + snapshot.getValue().toString());
             }

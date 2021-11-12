@@ -47,6 +47,8 @@
     <string name="sent">Sent</string>
     <string name="user">User</string>
     <string name="a7_title">Stick It To \'Em</string>
+    <string name="welcome">Welcome,</string>
+    <string name="user_placeholder">%1$s</string>
     <string name="open_nav_menu">Open Navigation Menu</string>
     <string name="closed_nav_menu">Closed Navigation Menu</string>
 
